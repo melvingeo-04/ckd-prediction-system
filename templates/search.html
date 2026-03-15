@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}Search Patients{% endblock %}
+{% block content %}
+{% if doctor %}
+<div class="consulting-bar">
+  <div class="container">
+    <span class="doc-chip">
+      <i class="bi bi-person-badge"></i>
+      Consulting: Dr. {{ doctor.name }}{% if doctor.specialization %} &nbsp;·&nbsp; {{ doctor.specialization }}{% endif %}
+    </span>
+  </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="text-center mb-5 fade-up">
+        <span class="section-pill">Patient Lookup</span>
+        <h2 class="section-title">Search Patients</h2>
+        <p class="text-muted">Search by Patient ID or full name</p>
+      </div>
+
+      <div class="kg-card mb-4 fade-up-2">
+        <div class="p-4">
+          <form method="GET" class="kg-form">
+            <div class="input-group input-group-lg">
+              <span class="input-group-text bg-white border-end-0"><i class="bi bi-search text-primary"></i></span>
+              <input type="text" name="q" class="form-control border-start-0 ps-0"
+                placeholder="Enter Patient ID (PID0001) or name..."
+                value="{{ query }}" autofocus/>
+              <button type="submit" class="btn btn-primary px-4">Search</button>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      {% if query %}
+        {% if results %}
+        <div class="fade-up-2">
+          <p class="text-muted small mb-3">{{ results|length }} result{{ 's' if results|length!=1 }} for "<strong>{{ query }}</strong>"</p>
+          {% for p in results %}
+          <div class="kg-card mb-3 p-0">
+            <div class="p-4 d-flex align-items-center justify-content-between gap-3 flex-wrap">
+              <div class="d-flex align-items-center gap-3">
+                <div class="patient-avatar">{{ p.name[0].upper() }}</div>
+                <div>
+                  <div class="fw-600">{{ p.name }}</div>
+                  <div class="d-flex gap-2 align-items-center mt-1">
+                    <span class="pid-badge">{{ p.pid }}</span>
+                    <span class="text-muted small">{{ p.gender or "" }} · {{ p.age }} yrs</span>
+                  </div>
+                  <div class="text-muted small mt-1">{{ p.phone or "" }} {% if p.email %}· {{ p.email }}{% endif %}</div>
+                </div>
+              </div>
+              <div class="d-flex gap-2">
+                <a href="/patient/{{ p.pid }}" class="btn btn-outline-primary rounded-pill btn-sm px-3">
+                  <i class="bi bi-eye me-1"></i>Profile
+                </a>
+                <a href="/predict/{{ p.pid }}" class="btn btn-primary rounded-pill btn-sm px-3">
+                  <i class="bi bi-cpu me-1"></i>CKD Test
+                </a>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center py-4 fade-up-2">
+          <i class="bi bi-search fs-1 text-muted opacity-50 d-block mb-2"></i>
+          <p class="text-muted">No patients found for "<strong>{{ query }}</strong>"</p>
+          <a href="/register" class="btn btn-primary rounded-pill px-4 mt-2">
+            <i class="bi bi-person-plus me-2"></i>Register New Patient
+          </a>
+        </div>
+        {% endif %}
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+<style>
+.patient-avatar{width:44px;height:44px;background:linear-gradient(135deg,var(--primary),var(--teal));
+  border-radius:11px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:1.2rem;font-weight:700;flex-shrink:0}
+</style>
+{% endblock %}

@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block title %}Patient Portal{% endblock %}
+{% block content %}
+
+{% if doctor %}
+<div class="consulting-bar">
+  <div class="container">
+    <span class="doc-chip">
+      <i class="bi bi-person-badge"></i>
+      Consulting: Dr. {{ doctor.name }}{% if doctor.specialization %} &nbsp;·&nbsp; {{ doctor.specialization }}{% endif %}
+    </span>
+  </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+
+      {% if doctor %}
+      <div class="mb-4 fade-up">
+        <a href="/patients" class="text-muted small text-decoration-none">
+          <i class="bi bi-arrow-left me-1"></i>Back to Patients
+        </a>
+        <h2 class="section-title mt-2">Register New Patient</h2>
+        <p class="text-muted">A unique Patient ID will be generated automatically.</p>
+      </div>
+      {% else %}
+      <div class="text-center mb-4 fade-up">
+        <span class="section-pill">Patient Portal</span>
+        <h2 class="section-title">CKD Screening Portal</h2>
+        <p class="text-muted">Register for a new assessment, or find your existing results below.</p>
+      </div>
+      {% endif %}
+
+      <!-- ── Register card ── -->
+      <div class="kg-card fade-up-2">
+        <div class="kg-card-header" style="background:linear-gradient(135deg,#1a6fc4,#0d9488)">
+          <i class="bi bi-person-plus-fill me-2"></i>
+          {% if doctor %}Register New Patient{% else %}New Patient Registration{% endif %}
+        </div>
+        <div class="p-4">
+          <form method="POST" action="/register" class="kg-form">
+            <div class="mb-3">
+              <label class="form-label">Full Name <span class="text-danger">*</span></label>
+              <div class="input-group">
+                <span class="input-group-text"><i class="bi bi-person"></i></span>
+                <input type="text" name="name" class="form-control" placeholder="e.g. Rahul Menon" required autofocus/>
+              </div>
+            </div>
+            <div class="row g-3 mb-4">
+              <div class="col-6">
+                <label class="form-label">Age <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                  <input type="number" name="age" class="form-control" placeholder="e.g. 45" min="1" max="120" required/>
+                </div>
+              </div>
+              <div class="col-6">
+                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                <select name="gender" class="form-select" required>
+                  <option value="" disabled selected>Select</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
+              </div>
+            </div>
+            <button type="submit" class="btn btn-primary rounded-pill px-4 py-2 fw-600 w-100">
+              <i class="bi bi-person-check me-2"></i>
+              {% if doctor %}Register Patient{% else %}Register &amp; Start Assessment{% endif %}
+            </button>
+          </form>
+
+          <!-- ── Divider ── -->
+          <div class="d-flex align-items-center gap-3 my-4">
+            <div style="flex:1;height:1px;background:#e2e8f0"></div>
+            <span class="text-muted small fw-500">Already registered?</span>
+            <div style="flex:1;height:1px;background:#e2e8f0"></div>
+          </div>
+
+          <!-- ── Patient ID search (shows for everyone) ── -->
+          <div>
+            <label class="form-label fw-600 mb-2">
+              <i class="bi bi-search me-1 text-primary"></i>Find Patient by ID
+            </label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+              <input type="text" id="pidInput"
+                class="form-control text-uppercase"
+                
+                maxlength="10"/>
+              <button type="button" onclick="doLookup()"
+                class="btn fw-600 px-3"
+                style="background:linear-gradient(135deg,#7c3aed,#1a6fc4);color:#fff;border:none;border-radius:0 10px 10px 0">
+                <i class="bi bi-search me-1"></i>Search
+              </button>
+            </div>
+            <div class="form-text mt-1">
+              <i class="bi bi-info-circle me-1"></i>Patient ID was shown on screen after registration (e.g. PIDxxxx).
+            </div>
+            <!-- inline result -->
+            <div id="lookupResult" class="mt-3" style="display:none"></div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function doLookup() {
+  const pid = document.getElementById("pidInput").value.trim().toUpperCase();
+  const box = document.getElementById("lookupResult");
+
+  if (!pid) {
+    box.style.display = "block";
+    box.innerHTML = `<div class="alert alert-warning py-2 px-3 small rounded-3 mb-0 border-0">
+      <i class="bi bi-exclamation-circle me-1"></i>Please enter a Patient ID first.
+    </div>`;
+    return;
+  }
+
+  box.style.display = "block";
+  box.innerHTML = `<div class="text-center py-3 text-muted small">
+    <div class="spinner-border spinner-border-sm text-primary me-2" role="status"></div>Searching...
+  </div>`;
+
+  fetch("/api/lookup?pid=" + encodeURIComponent(pid))
+    .then(r => r.json())
+    .then(data => {
+      if (data.found) {
+        const p = data.patient;
+        const reports = data.reports;
+
+        let reportsHtml = "";
+        if (reports.length === 0) {
+          reportsHtml = `<p class="text-muted mb-0" style="font-size:.8rem">
+            <i class="bi bi-clipboard-x me-1"></i>No test reports yet.</p>`;
+        } else {
+          reportsHtml = reports.map(r => {
+            const cls = r.level.includes("Low") ? "risk-low"
+                      : r.level.includes("Moderate") ? "risk-moderate" : "risk-high";
+            const col = r.level.includes("Low") ? "#16a34a"
+                      : r.level.includes("Moderate") ? "#d97706" : "#dc2626";
+            return `<a href="/result/${r.report_id}"
+              class="d-flex align-items-center justify-content-between p-2 rounded-3 mb-2 text-decoration-none report-row">
+              <div class="d-flex align-items-center gap-2">
+                <span class="risk-badge ${cls}" style="font-size:.68rem;padding:.2rem .5rem">${r.level}</span>
+                <span class="text-muted" style="font-size:.74rem">${r.test_date}</span>
+              </div>
+              <div class="d-flex align-items-center gap-1">
+                <strong style="font-size:.85rem;color:${col}">${r.score}%</strong>
+                <i class="bi bi-chevron-right text-muted" style="font-size:.7rem"></i>
+              </div>
+            </a>`;
+          }).join("");
+        }
+
+        box.innerHTML = `
+          <div class="p-3 rounded-3" style="background:#f0f9ff;border:1.5px solid #bae6fd">
+            <div class="d-flex align-items-center gap-2 mb-3 pb-2" style="border-bottom:1px solid #bae6fd">
+              <div style="width:36px;height:36px;background:linear-gradient(135deg,#1a6fc4,#0d9488);
+                border-radius:9px;display:flex;align-items:center;justify-content:center;
+                color:#fff;font-weight:700;font-size:.95rem;flex-shrink:0">
+                ${p.name[0].toUpperCase()}
+              </div>
+              <div>
+                <div class="fw-700" style="font-size:.9rem">${p.name}</div>
+                <div class="d-flex gap-2 align-items-center mt-1">
+                  <span class="pid-badge" style="font-size:.68rem">${p.pid}</span>
+                  <span class="text-muted" style="font-size:.72rem">${p.gender || ''}${p.gender && p.age ? ' · ' : ''}${p.age} yrs</span>
+                </div>
+              </div>
+            </div>
+            <div class="small fw-600 mb-2" style="color:#64748b;font-size:.72rem;letter-spacing:.05em">
+              TEST REPORTS (${reports.length})
+            </div>
+            ${reportsHtml}
+            <a href="/predict/${p.pid}"
+              class="btn btn-primary rounded-pill w-100 py-2 mt-2 fw-600"
+              style="font-size:.85rem">
+              <i class="bi bi-cpu me-2"></i>Run New CKD Assessment
+            </a>
+          </div>`;
+      } else {
+        box.innerHTML = `
+          <div class="p-3 rounded-3" style="background:#fef2f2;border:1.5px solid #fecaca">
+            <div class="d-flex align-items-center gap-2 mb-1">
+              <i class="bi bi-exclamation-circle-fill text-danger"></i>
+              <span class="fw-600 small text-danger">No patient found</span>
+            </div>
+            <p class="text-muted mb-0" style="font-size:.8rem">
+              No record for <strong>${pid}</strong>. Please double-check your Patient ID.
+            </p>
+          </div>`;
+      }
+    })
+    .catch(() => {
+      box.innerHTML = `<div class="alert alert-danger py-2 px-3 small rounded-3 mb-0 border-0">
+        <i class="bi bi-wifi-off me-1"></i>Connection error. Please try again.
+      </div>`;
+    });
+}
+
+document.getElementById("pidInput").addEventListener("keydown", e => {
+  if (e.key === "Enter") doLookup();
+});
+document.getElementById("pidInput").addEventListener("input", function() {
+  const p = this.selectionStart;
+  this.value = this.value.toUpperCase();
+  this.setSelectionRange(p, p);
+});
+</script>
+<style>
+.report-row { background:#f8fafc; border:1px solid #e2e8f0; transition:background .15s; }
+.report-row:hover { background:#eff6ff !important; }
+</style>
+{% endblock %}

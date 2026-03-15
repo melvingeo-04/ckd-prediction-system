@@ -1,0 +1,315 @@
+{% extends "base.html" %}
+{% block title %}CKD Result — {{ patient.name }}{% endblock %}
+{% block content %}
+
+{% if doctor %}
+<div class="consulting-bar">
+  <div class="container">
+    <span class="doc-chip"><i class="bi bi-person-badge"></i> Consulting: Dr. {{ doctor.name }}</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+
+      <!-- Header -->
+      <div class="mb-4 fade-up">
+        <a href="/" class="text-muted small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>Back to Home</a>
+        <h2 class="section-title mt-2 mb-0">Assessment Result</h2>
+        <div class="d-flex align-items-center gap-2 mt-1">
+          <span class="pid-badge">{{ patient.pid }}</span>
+          <span class="text-muted small">{{ patient.name }} · {{ patient.age }} yrs</span>
+        </div>
+      </div>
+
+      <!-- ── TOP ROW: Score + Interpretation ── -->
+      <div class="row g-4 mb-4">
+
+        <!-- Score card -->
+        <div class="col-lg-4 fade-up">
+          <div class="kg-card h-100 p-4 text-center d-flex flex-column align-items-center justify-content-center">
+            <div class="mb-3" style="position:relative;width:180px;height:180px">
+              <svg width="180" height="180" viewBox="0 0 180 180">
+                <circle cx="90" cy="90" r="74" fill="none" stroke="#f1f5f9" stroke-width="14"/>
+                <circle cx="90" cy="90" r="74" fill="none"
+                  stroke="{% if level_class=='low' %}#16a34a{% elif level_class=='moderate' %}#d97706{% else %}#dc2626{% endif %}"
+                  stroke-width="14" stroke-linecap="round"
+                  stroke-dasharray="0 465"
+                  style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dasharray 1.4s cubic-bezier(.4,0,.2,1)"
+                  id="scoreArc"/>
+              </svg>
+              <div style="position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center">
+                <div id="scoreCount" style="font-size:2.6rem;font-weight:800;line-height:1;color:{% if level_class=='low' %}#16a34a{% elif level_class=='moderate' %}#d97706{% else %}#dc2626{% endif %}">0%</div>
+                <div style="font-size:.72rem;color:#64748b;margin-top:.2rem">Risk Score</div>
+              </div>
+            </div>
+            <span class="risk-badge risk-{{ level_class }}" style="font-size:.9rem;padding:.4rem 1.1rem">
+              <i class="bi {% if level_class=='low' %}bi-check-circle-fill{% elif level_class=='moderate' %}bi-exclamation-circle-fill{% else %}bi-x-circle-fill{% endif %} me-1"></i>
+              {{ level }}
+            </span>
+            <div class="mt-3 w-100">
+              <div style="height:8px;background:#f1f5f9;border-radius:999px;overflow:hidden">
+                <div id="scoreBar" style="height:100%;width:0%;border-radius:999px;
+                  background:{% if level_class=='low' %}linear-gradient(90deg,#16a34a,#4ade80){% elif level_class=='moderate' %}linear-gradient(90deg,#d97706,#fbbf24){% else %}linear-gradient(90deg,#dc2626,#f87171){% endif %};
+                  transition:width 1.4s cubic-bezier(.4,0,.2,1)"></div>
+              </div>
+              <div class="d-flex justify-content-between mt-1">
+                <span style="font-size:.65rem;color:#94a3b8">0%</span>
+                <span style="font-size:.65rem;color:#94a3b8">100%</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Interpretation card -->
+        <div class="col-lg-8 fade-up-2">
+          <div class="kg-card h-100 p-4">
+            <h5 class="fw-700 mb-3">Medical Interpretation</h5>
+            {% if level_class == 'low' %}
+            <div class="result-alert result-alert-low mb-3">
+              <i class="bi bi-shield-check fs-4 me-3 flex-shrink-0"></i>
+              <div><strong>Good news!</strong> Risk score is low ({{ score }}%). Kidney function indicators appear within acceptable ranges. Continue healthy habits and schedule regular checkups.</div>
+            </div>
+            {% elif level_class == 'moderate' %}
+            <div class="result-alert result-alert-moderate mb-3">
+              <i class="bi bi-exclamation-triangle fs-4 me-3 flex-shrink-0"></i>
+              <div><strong>Caution.</strong> Moderate risk detected ({{ score }}%). Some kidney function indicators are elevated. Consultation with a nephrologist is recommended for further evaluation.</div>
+            </div>
+            {% else %}
+            <div class="result-alert result-alert-high mb-3">
+              <i class="bi bi-exclamation-octagon fs-4 me-3 flex-shrink-0"></i>
+              <div><strong>High Risk Detected!</strong> Risk score is {{ score }}%. Immediate medical consultation is strongly advised. Do not delay seeking professional care.</div>
+            </div>
+            {% endif %}
+
+            <h6 class="fw-600 mb-2 mt-3">Key Contributing Factors</h6>
+            <div class="d-flex flex-column gap-2">
+              {% for ex in explanations %}
+              <div class="factor-item factor-{{ 'up' if 'increased' in ex else 'down' }}">
+                <i class="bi bi-{{ 'arrow-up-circle-fill' if 'increased' in ex else 'arrow-down-circle-fill' }}"></i>
+                <span class="small">{{ ex }}</span>
+              </div>
+              {% endfor %}
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ── SHAP Chart (animated) ── -->
+      {% if shap_vals %}
+      <div class="kg-card mb-4 fade-up-2">
+        <div class="kg-card-header d-flex align-items-center gap-2">
+          <i class="bi bi-bar-chart-line"></i>
+          <span>Explainable AI — Feature Contributions (SHAP)</span>
+        </div>
+        <div class="p-4">
+          <div class="d-flex flex-wrap gap-3 mb-4">
+            <span class="legend-pill" style="background:#fee2e2;color:#b91c1c">
+              <i class="bi bi-arrow-up-circle-fill me-1"></i>Increases risk
+            </span>
+            <span class="legend-pill" style="background:#dcfce7;color:#15803d">
+              <i class="bi bi-arrow-down-circle-fill me-1"></i>Reduces risk
+            </span>
+            <span class="text-muted small ms-auto align-self-center">Bar length = strength of impact</span>
+          </div>
+          <div style="position:relative;height:340px">
+            <canvas id="shapChart"></canvas>
+          </div>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- ── Clinical Values ── -->
+      <div class="kg-card mb-4 fade-up-2">
+        <div class="kg-card-header d-flex align-items-center gap-2">
+          <i class="bi bi-clipboard2-pulse"></i>
+          <span>Clinical Values Entered</span>
+        </div>
+        <div class="p-4">
+          {% set ranges = {
+            "age": ("—","—","—"),
+            "bp":  ("mm/Hg","60–90","High BP damages kidney vessels"),
+            "sc":  ("mgs/dl","0.6–1.2","Key marker of kidney filtration"),
+            "bu":  ("mgs/dl","7–20","Elevated = reduced kidney clearance"),
+            "hemo":("gms","12–17","Low = possible kidney-related anemia"),
+            "bgr": ("mgs/dl","70–140","High glucose damages glomeruli"),
+            "al":  ("0–5","0","Protein in urine = filtration issue"),
+            "sg":  ("","1.005–1.025","Urine concentration ability"),
+            "htn": ("","No = 0","Hypertension strains kidneys"),
+            "dm":  ("","No = 0","Diabetes is #1 CKD cause")
+          } %}
+          <div class="row g-3">
+            {% for k,v in inputs.items() %}
+            {% set info = ranges.get(k, ("","—","")) %}
+            {% set is_normal = true %}
+            <div class="col-md-6 col-lg-4">
+              <div class="clinical-card">
+                <div class="clinical-label">{{ feature_labels[k] }}</div>
+                <div class="clinical-value">{{ v }}{% if info[0] and info[0] != '—' %} <span class="clinical-unit">{{ info[0] }}</span>{% endif %}</div>
+                <div class="clinical-range">Normal: {{ info[1] }}</div>
+                {% if info[2] and info[2] != '—' %}
+                <div class="clinical-note">{{ info[2] }}</div>
+                {% endif %}
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="d-flex gap-3 flex-wrap fade-up-3">
+        <a href="/register" class="btn btn-primary rounded-pill px-4">
+          <i class="bi bi-arrow-repeat me-2"></i>New Screening
+        </a>
+        <button onclick="window.print()" class="btn btn-outline-secondary rounded-pill px-4">
+          <i class="bi bi-printer me-2"></i>Print Report
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+/* ── Result alerts ── */
+.result-alert{display:flex;align-items:flex-start;padding:1rem 1.1rem;border-radius:12px;border-left:4px solid}
+.result-alert-low{background:#f0fdf4;border-color:#16a34a;color:#14532d}
+.result-alert-moderate{background:#fffbeb;border-color:#d97706;color:#78350f}
+.result-alert-high{background:#fef2f2;border-color:#dc2626;color:#7f1d1d}
+
+/* ── Factor items ── */
+.factor-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .8rem;border-radius:9px;font-size:.85rem}
+.factor-up{background:#fef2f2;color:#b91c1c}
+.factor-up i{color:#dc2626;font-size:1rem}
+.factor-down{background:#f0fdf4;color:#15803d}
+.factor-down i{color:#16a34a;font-size:1rem}
+
+/* ── Legend pills ── */
+.legend-pill{display:inline-flex;align-items:center;font-size:.75rem;font-weight:600;padding:.25rem .7rem;border-radius:999px}
+
+/* ── Clinical cards ── */
+.clinical-card{background:#f8fafc;border:1px solid #e2e8f0;border-radius:12px;padding:.9rem 1rem;height:100%}
+.clinical-label{font-size:.72rem;color:#64748b;font-weight:600;text-transform:uppercase;letter-spacing:.04em;margin-bottom:.2rem}
+.clinical-value{font-size:1.3rem;font-weight:700;color:#1e293b;line-height:1.1}
+.clinical-unit{font-size:.7rem;font-weight:400;color:#64748b}
+.clinical-range{font-size:.72rem;color:#94a3b8;margin-top:.2rem}
+.clinical-note{font-size:.7rem;color:#64748b;margin-top:.15rem;font-style:italic}
+
+@media print{.kg-nav,.kg-footer,.btn,.consulting-bar{display:none!important}}
+</style>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+window.addEventListener("load", () => {
+
+  // ── Score ring + counter animation ──────────────────────
+  const target       = {{ score }};
+  const arc          = document.getElementById("scoreArc");
+  const counter      = document.getElementById("scoreCount");
+  const bar          = document.getElementById("scoreBar");
+  const circumference = 2 * Math.PI * 74;
+
+  setTimeout(() => {
+    arc.style.strokeDasharray = `${(target/100)*circumference} ${circumference}`;
+    bar.style.width = target + "%";
+  }, 200);
+
+  let current = 0;
+  const step = target / 60;
+  const timer = setInterval(() => {
+    current = Math.min(current + step, target);
+    counter.textContent = Math.round(current) + "%";
+    if (current >= target) clearInterval(timer);
+  }, 16);
+
+  // ── SHAP animated chart ─────────────────────────────────
+  const canvas = document.getElementById("shapChart");
+  if (!canvas) return;
+
+  const rawVals   = {{ shap_vals | tojson }};
+  const rawLabels = {{ shap_labels | tojson }};
+
+  // Sort by absolute value descending
+  const order = rawVals
+    .map((v, i) => ({ v, l: rawLabels[i], abs: Math.abs(v) }))
+    .sort((a, b) => a.abs - b.abs);   // ascending so Chart.js horizontal reads top-to-bottom
+
+  const vals   = order.map(o => parseFloat(o.v.toFixed(4)));
+  const labels = order.map(o => o.l);
+  const colors = vals.map(v => v > 0
+    ? "rgba(220,38,38,0.82)"    // red — increases risk
+    : "rgba(22,163,74,0.82)"    // green — reduces risk
+  );
+  const borderColors = vals.map(v => v > 0 ? "#dc2626" : "#16a34a");
+
+  new Chart(canvas, {
+    type: "bar",
+    data: {
+      labels: labels,
+      datasets: [{
+        label: "SHAP Value",
+        data: vals,
+        backgroundColor: colors,
+        borderColor: borderColors,
+        borderWidth: 1.5,
+        borderRadius: 6,
+        borderSkipped: false,
+      }]
+    },
+    options: {
+      indexAxis: "y",
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 1100,
+        easing: "easeOutQuart",
+        delay: (ctx) => ctx.dataIndex * 60,
+      },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const v = ctx.parsed.x;
+              return ` ${v > 0 ? "▲ Increases" : "▼ Reduces"} risk by ${Math.abs(v).toFixed(4)}`;
+            }
+          },
+          backgroundColor: "#1e293b",
+          titleColor: "#f8fafc",
+          bodyColor: "#cbd5e1",
+          padding: 10,
+          cornerRadius: 8,
+        }
+      },
+      scales: {
+        x: {
+          grid: {
+            color: "rgba(0,0,0,0.06)",
+            drawTicks: false,
+          },
+          ticks: {
+            color: "#94a3b8",
+            font: { size: 11 },
+            callback: v => v.toFixed(3)
+          },
+          border: { dash: [4, 4] },
+        },
+        y: {
+          grid: { display: false },
+          ticks: {
+            color: "#334155",
+            font: { size: 12, weight: "500" },
+            padding: 8,
+          }
+        }
+      }
+    }
+  });
+
+});
+</script>
+{% endblock %}

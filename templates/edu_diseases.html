@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Kidney Diseases{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="mb-5 fade-up">
+    <span class="section-pill">Education</span>
+    <h2 class="section-title">Kidney Diseases</h2>
+    <p class="text-muted">Understanding the most common kidney conditions and their impact.</p>
+  </div>
+  <div class="row g-4">
+    {% set diseases = [
+      ("bi-virus","#dc2626","Chronic Kidney Disease (CKD)","CKD is the gradual loss of kidney function over months or years. It is caused by conditions that damage the kidneys over time, primarily diabetes and high blood pressure. CKD has 5 stages based on GFR (glomerular filtration rate). Stage 5 is kidney failure, requiring dialysis or transplant.","Common symptoms: fatigue, swelling, reduced urine, high BP, anemia."),
+      ("bi-droplet","#1a6fc4","Acute Kidney Injury (AKI)","AKI is a sudden episode of kidney failure or damage that happens within a few hours or days. It can occur due to severe infections, dehydration, or certain medications. Unlike CKD, AKI is often reversible if treated quickly.","Causes: dehydration, sepsis, NSAIDs, contrast dyes."),
+      ("bi-gem","#d97706","Kidney Stones","Kidney stones are hard mineral and salt deposits that form inside the kidneys. They can cause severe pain when passing through the urinary tract. Diet, dehydration, and genetics play major roles in their formation.","Symptoms: severe back/side pain, blood in urine, frequent urination."),
+      ("bi-shield-x","#7c3aed","Glomerulonephritis","Inflammation of the glomeruli — tiny filters in the kidneys. It can be acute or chronic and may result from infections, autoimmune diseases, or other conditions. It reduces the kidney's ability to filter waste effectively.","Symptoms: blood in urine, proteinuria, swelling, high BP."),
+      ("bi-lungs","#0d9488","Polycystic Kidney Disease (PKD)","PKD is a genetic disorder where clusters of cysts develop in the kidneys, causing them to enlarge and lose function over time. It is one of the most common life-threatening genetic diseases.","Signs: abdominal pain, high BP, kidney failure by middle age."),
+      ("bi-bacteria","#16a34a","Urinary Tract Infections (UTI)","Frequent or untreated UTIs can spread to the kidneys causing pyelonephritis — a serious kidney infection. Repeated infections can lead to kidney scarring and chronic damage.","Symptoms: burning urination, fever, back pain, cloudy urine.")
+    ] %}
+    {% for icon,color,title,desc,note in diseases %}
+    <div class="col-md-6 fade-up">
+      <div class="edu-card">
+        <div class="edu-icon" style="color:{{ color }}"><i class="bi {{ icon }}"></i></div>
+        <h5 class="fw-700 mb-2">{{ title }}</h5>
+        <p class="text-muted small mb-2">{{ desc }}</p>
+        <div class="p-2 rounded-2" style="background:{{ color }}12;border-left:3px solid {{ color }}">
+          <p class="mb-0 small" style="color:{{ color }}"><i class="bi bi-info-circle me-1"></i>{{ note }}</p>
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

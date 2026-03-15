@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block title %}CKD Test — {{ patient.name }}{% endblock %}
+{% block content %}
+{% if doctor %}
+<div class="consulting-bar">
+  <div class="container">
+    <span class="doc-chip">
+      <i class="bi bi-person-badge"></i>
+      Consulting: Dr. {{ doctor.name }}{% if doctor.specialization %} &nbsp;·&nbsp; {{ doctor.specialization }}{% endif %}
+    </span>
+  </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-7">
+
+      <div class="mb-4 fade-up">
+        <a href="/patient/{{ patient.pid }}" class="text-muted small text-decoration-none">
+          <i class="bi bi-arrow-left me-1"></i>Back to Profile
+        </a>
+        <h2 class="section-title mt-2 mb-0">CKD Risk Assessment</h2>
+        <div class="d-flex align-items-center gap-2 mt-1">
+          <span class="pid-badge">{{ patient.pid }}</span>
+          <span class="text-muted small">{{ patient.name }} · {{ patient.age }} yrs</span>
+        </div>
+      </div>
+
+      <div class="kg-card fade-up-2">
+        <div class="kg-card-header"><i class="bi bi-clipboard2-pulse me-2"></i>Clinical Parameters</div>
+        <div class="p-4">
+          <form method="POST" class="kg-form">
+
+            <input type="hidden" name="age" value="{{ patient.age }}"/>
+
+            <div class="row g-3">
+
+              <!-- Age (read-only) -->
+              <div class="col-md-6">
+                <label class="form-label">Age <small class="text-muted">(years)</small></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                  <input type="text" class="form-control bg-light" value="{{ patient.age }} years" readonly/>
+                </div>
+              </div>
+
+              <!-- Clinical fields -->
+              {% set fields = [
+                ("bp",   "Blood Pressure",       "mm/Hg",  "bi-heart-pulse",  "50","200","e.g. 80"),
+                ("sc",   "Serum Creatinine",      "mgs/dl", "bi-droplet",      "0.1","20","e.g. 1.2"),
+                ("bu",   "Blood Urea",            "mgs/dl", "bi-activity",     "1","200","e.g. 36"),
+                ("hemo", "Hemoglobin",            "gms",    "bi-droplet-half", "3","20","e.g. 15.4"),
+                ("bgr",  "Blood Glucose Random",  "mgs/dl", "bi-graph-up",     "50","500","e.g. 121"),
+                ("al",   "Albumin",               "0–5",    "bi-beaker",       "0","5","0,1,2,3,4 or 5"),
+                ("sg",   "Specific Gravity",      "",       "bi-eyedropper",   "1.005","1.025","e.g. 1.020")
+              ] %}
+              {% for name,label,unit,icon,mn,mx,ph in fields %}
+              <div class="col-md-6">
+                <label class="form-label">
+                  {{ label }}{% if unit %} <small class="text-muted">({{ unit }})</small>{% endif %}
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi {{ icon }}"></i></span>
+                  <input type="number" step="any" name="{{ name }}" id="f_{{ name }}"
+                    class="form-control" placeholder="{{ ph }}"
+                    min="{{ mn }}" max="{{ mx }}" required/>
+                </div>
+              </div>
+              {% endfor %}
+
+              <!-- Hypertension -->
+              <div class="col-md-6">
+                <label class="form-label">Hypertension</label>
+                <div class="d-flex gap-2">
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="htn" value="1" class="d-none" required/>
+                    <div class="toggle-btn"><i class="bi bi-check-circle me-1"></i>Yes</div>
+                  </label>
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="htn" value="0" class="d-none"/>
+                    <div class="toggle-btn"><i class="bi bi-x-circle me-1"></i>No</div>
+                  </label>
+                </div>
+              </div>
+
+              <!-- Diabetes -->
+              <div class="col-md-6">
+                <label class="form-label">Diabetes Mellitus</label>
+                <div class="d-flex gap-2">
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="dm" value="1" class="d-none" required/>
+                    <div class="toggle-btn"><i class="bi bi-check-circle me-1"></i>Yes</div>
+                  </label>
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="dm" value="0" class="d-none"/>
+                    <div class="toggle-btn"><i class="bi bi-x-circle me-1"></i>No</div>
+                  </label>
+                </div>
+              </div>
+
+              <div class="col-12 mt-3">
+                <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-600 w-100">
+                  <i class="bi bi-cpu me-2"></i>Run AI Risk Assessment
+                </button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<style>
+.toggle-option input:checked + .toggle-btn { background:var(--primary);color:#fff;border-color:var(--primary); }
+.toggle-btn { border:1.5px solid var(--border);border-radius:10px;padding:.55rem;text-align:center;
+  cursor:pointer;font-size:.875rem;font-weight:500;transition:all .2s; }
+.toggle-btn:hover { border-color:var(--primary);color:var(--primary); }
+</style>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll(".toggle-option input").forEach(r=>{
+  r.addEventListener("change",()=>{
+    document.querySelectorAll(`[name="${r.name}"] + .toggle-btn`).forEach(b=>b.style.background="");
+  });
+});
+</script>
+{% endblock %}
