@@ -6,88 +6,13 @@
 <title>{% block title %}CKD Prediction System{% endblock %}</title>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
-<link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700&family=Lora:wght@400;600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet"/>
 <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet"/>
-<style>
-:root{
-  --primary:#1a5fb4;--primary-dark:#164a8a;--teal:#0d9488;
-  --danger:#dc2626;--success:#16a34a;--warning:#d97706;
-  --bg:#f0f4f8;--card:#ffffff;--border:#e2e8f0;
-  --text:#1e293b;--muted:#64748b;
-  --font:'Sora',sans-serif;--font-serif:'Lora',serif;
-}
-*{box-sizing:border-box}
-body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:.925rem}
-/* NAV */
-.ckd-nav{background:#fff;border-bottom:1px solid var(--border);padding:.75rem 0}
-.ckd-nav .navbar-brand{font-weight:700;font-size:1.1rem;color:var(--primary)!important;letter-spacing:-.02em}
-.ckd-nav .brand-icon{width:34px;height:34px;background:linear-gradient(135deg,var(--primary),var(--teal));border-radius:9px;display:flex;align-items:center;justify-content:center}
-.ckd-nav .nav-link{color:var(--text)!important;font-size:.85rem;font-weight:500;padding:.4rem .75rem!important;border-radius:8px;transition:background .15s}
-.ckd-nav .nav-link:hover{background:#f1f5f9;color:var(--primary)!important}
-.ckd-nav .nav-link.active{color:var(--primary)!important;background:#eff6ff}
-.doc-avatar{width:32px;height:32px;background:linear-gradient(135deg,var(--primary),var(--teal));border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:700;font-size:.8rem}
-/* CARDS */
-.ckd-card{background:var(--card);border:1px solid var(--border);border-radius:16px;box-shadow:0 1px 4px rgba(0,0,0,.05)}
-.ckd-card-header{padding:.9rem 1.2rem;border-bottom:1px solid var(--border);font-weight:600;font-size:.85rem;color:var(--muted);display:flex;align-items:center;gap:.5rem}
-/* BADGES */
-.pid-badge{background:#eff6ff;color:var(--primary);border-radius:6px;padding:.2rem .6rem;font-size:.72rem;font-weight:700;letter-spacing:.04em;font-family:monospace}
-/* RISK BADGES */
-.risk-badge{display:inline-flex;align-items:center;gap:.35rem;padding:.35rem .9rem;border-radius:999px;font-weight:600;font-size:.8rem}
-.risk-low{background:#f0fdf4;color:#15803d;border:1px solid #bbf7d0}
-.risk-moderate{background:#fffbeb;color:#b45309;border:1px solid #fde68a}
-.risk-high{background:#fef2f2;color:#b91c1c;border:1px solid #fecaca}
-/* SECTION PILLS */
-.section-pill{background:#eff6ff;color:var(--primary);border-radius:999px;padding:.25rem .8rem;font-size:.75rem;font-weight:600;display:inline-block;margin-bottom:.5rem}
-.section-title{font-family:var(--font-serif);font-size:1.7rem;font-weight:600;color:var(--text);line-height:1.25}
-/* CONSULTING BAR */
-.consulting-bar{background:linear-gradient(90deg,#eff6ff,#f0fdfa);border-bottom:1px solid var(--border);padding:.5rem 0}
-.doc-chip{display:inline-flex;align-items:center;gap:.5rem;font-size:.8rem;font-weight:500;color:var(--primary)}
-/* HERO */
-.ckd-hero{background:linear-gradient(135deg,#0f3460 0%,#1a5fb4 50%,#0d9488 100%);color:#fff;padding:5rem 0 4rem}
-/* INFO CARD */
-.info-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:1.2rem;height:100%;transition:transform .2s,box-shadow .2s}
-.info-card:hover{transform:translateY(-3px);box-shadow:0 8px 24px rgba(0,0,0,.08)}
-.icon-wrap{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;margin-bottom:.75rem}
-/* TABLE */
-.ckd-table thead th{background:#f8fafc;font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;border-bottom:2px solid var(--border);padding:.75rem 1rem}
-.ckd-table tbody td{padding:.75rem 1rem;vertical-align:middle;border-color:var(--border)}
-.ckd-table tbody tr:hover{background:#f8fafc}
-/* FOOTER */
-.ckd-footer{background:#fff;border-top:1px solid var(--border);padding:2rem 0}
-.disclaimer-box{background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1rem 1.2rem;margin-top:1rem}
-/* FORM */
-.form-label{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.35rem;text-transform:uppercase;letter-spacing:.04em}
-.form-control,.form-select{border-color:var(--border);border-radius:10px;font-size:.9rem;padding:.55rem .85rem}
-.form-control:focus,.form-select:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(26,95,180,.12)}
-.input-group-text{background:#f8fafc;border-color:var(--border);color:var(--muted)}
-/* SPINNER OVERLAY */
-.loading-overlay{display:none;position:fixed;inset:0;background:rgba(15,52,96,.88);z-index:9999;flex-direction:column;align-items:center;justify-content:center;gap:1.5rem}
-.loading-overlay.show{display:flex}
-.loading-spinner{width:56px;height:56px;border:5px solid rgba(255,255,255,.2);border-top-color:#fff;border-radius:50%;animation:spin .9s linear infinite}
-@keyframes spin{to{transform:rotate(360deg)}}
-/* FADE ANIMS */
-.fade-up{animation:fadeUp .5s ease both}
-.fade-up-2{animation:fadeUp .5s .1s ease both}
-.fade-up-3{animation:fadeUp .5s .2s ease both}
-@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-/* TOOLTIP */
-.field-tooltip{position:relative;display:inline-block;cursor:help;color:var(--muted);margin-left:4px}
-.field-tooltip .tip{display:none;position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#1e293b;color:#fff;border-radius:8px;padding:.4rem .7rem;font-size:.72rem;white-space:nowrap;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.2)}
-.field-tooltip:hover .tip{display:block}
-/* SECTION GROUPS */
-.section-group{background:#fff;border:1px solid var(--border);border-radius:16px;overflow:hidden;margin-bottom:1.25rem}
-.section-group-header{background:linear-gradient(90deg,#eff6ff,#f0fdfa);padding:.75rem 1.2rem;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:.5rem;font-weight:600;font-size:.85rem;color:var(--primary)}
-.section-group-body{padding:1.2rem}
-/* TOGGLE */
-.toggle-option input:checked+.toggle-btn{background:var(--primary);color:#fff;border-color:var(--primary)}
-.toggle-btn{border:1.5px solid var(--border);border-radius:10px;padding:.55rem;text-align:center;cursor:pointer;font-size:.875rem;font-weight:500;transition:all .2s}
-.toggle-btn:hover{border-color:var(--primary);color:var(--primary)}
-</style>
 </head>
 <body>
 
 <!-- NAVBAR -->
-<nav class="navbar navbar-expand-lg ckd-nav sticky-top">
+<nav class="navbar navbar-expand-lg kg-nav sticky-top">
   <div class="container">
     <a class="navbar-brand d-flex align-items-center gap-2" href="/">
       <div class="brand-icon">
@@ -96,7 +21,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:.9
           <path d="M15 4C16.5 5.5 17 8 17 10C17 13 15.5 15 15.5 17.5C15.5 19.5 16.5 21 18 21.5C19 20 19.5 18 19.5 16C19.5 13 18 11 18 8.5C18 6.5 17 4.5 15.5 3C15.3 3.3 15.1 3.6 15 4Z" fill="white" opacity="0.7"/>
         </svg>
       </div>
-      <span>CKD <strong>Prediction System</strong></span>
+      <span class="brand-text">CKD <strong>Prediction System</strong></span>
     </a>
     <button class="navbar-toggler border-0" type="button" data-bs-toggle="collapse" data-bs-target="#nav">
       <i class="bi bi-list fs-4"></i>
@@ -164,7 +89,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:.9
 <main>{% block content %}{% endblock %}</main>
 
 <!-- FOOTER -->
-<footer class="ckd-footer mt-5">
+<footer class="kg-footer mt-5 py-4">
   <div class="container">
     <div class="row align-items-center gy-3">
       <div class="col-lg-5">
@@ -179,7 +104,7 @@ body{font-family:var(--font);background:var(--bg);color:var(--text);font-size:.9
         <p class="text-muted small mb-0">AI-Powered Chronic Kidney Disease Screening — BTech ML Project</p>
       </div>
       <div class="col-lg-7">
-        <div class="disclaimer-box">
+        <div style="background:#fffbeb;border:1px solid #fde68a;border-radius:12px;padding:1rem 1.2rem">
           <div class="d-flex align-items-start gap-2">
             <i class="bi bi-exclamation-triangle-fill text-warning mt-1 flex-shrink-0"></i>
             <div>

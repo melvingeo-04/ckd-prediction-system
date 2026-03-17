@@ -9,41 +9,15 @@
 </div>
 {% endif %}
 
-<style>
-.portal-wrap{min-height:auto;display:flex;align-items:center;padding:3rem 0}
-.panel-container{position:relative;overflow:hidden}
-/* Slide panels */
-.panels-track{display:flex;width:200%;transition:transform .65s cubic-bezier(.25,0.46,0.45,0.94);will-change:transform}
-.slide-panel{width:50%;flex-shrink:0;transition:opacity .65s ease}
-#registerPanel{opacity:1}
-#lookupPanel{opacity:0}
-.portal-wrap.show-lookup .panels-track{transform:translateX(-50%)}
-.portal-wrap.show-lookup #registerPanel{opacity:0}
-.portal-wrap.show-lookup #lookupPanel{opacity:1}
-/* Card styling */
-.portal-card{background:#fff;border:1px solid var(--border);border-radius:20px;overflow:hidden;box-shadow:0 4px 24px rgba(0,0,0,.07)}
-.portal-card-header{background:linear-gradient(135deg,#0f3460,#1a5fb4);padding:1.5rem 1.8rem;color:#fff}
-.portal-card-body{padding:1.8rem}
-/* Already registered btn */
-.already-btn{display:flex;align-items:center;gap:.5rem;width:100%;padding:.8rem 1rem;border:1.5px dashed var(--border);border-radius:12px;background:transparent;color:var(--muted);font-size:.875rem;font-weight:500;cursor:pointer;transition:all .2s;justify-content:center;margin-top:.75rem}
-.already-btn:hover{border-color:var(--primary);color:var(--primary);background:#eff6ff}
-/* Back btn */
-.back-slide-btn{display:flex;align-items:center;gap:.5rem;background:none;border:none;color:var(--muted);font-size:.83rem;cursor:pointer;padding:0;transition:color .15s}
-.back-slide-btn:hover{color:var(--primary)}
-/* PID result card */
-.pid-result{background:#f8fafc;border:1px solid var(--border);border-radius:14px;padding:1rem 1.2rem;margin-top:1rem}
-.pid-result .name{font-weight:700;font-size:1rem}
-</style>
-
 <div class="container portal-wrap" id="portalWrap">
   <div class="row justify-content-center w-100">
-    <div class="col-lg-5 col-md-7 panel-container">
+    <div class="col-lg-5 col-md-7 panel-container" style="overflow:hidden">
 
       <!-- SLIDING TRACK -->
       <div class="panels-track">
 
       <!-- PANEL 1: REGISTER -->
-      <div id="registerPanel" class="slide-panel">
+      <div id="registerPanel" class="slide-panel" style="opacity:1">
         <div class="portal-card fade-up">
           <div class="portal-card-header">
             <div class="d-flex align-items-center gap-2 mb-1">
@@ -100,7 +74,7 @@
       </div>
 
       <!-- PANEL 2: LOOKUP -->
-      <div id="lookupPanel" class="slide-panel">
+      <div id="lookupPanel" class="slide-panel" style="opacity:0;pointer-events:none">
         <div class="portal-card fade-up">
           <div class="portal-card-header">
             <button class="back-slide-btn mb-2" onclick="showRegister()">

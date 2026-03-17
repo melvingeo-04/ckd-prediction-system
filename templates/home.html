@@ -1,171 +1,4 @@
 {% extends "base.html" %}
-{% block title %}CKD Risk Assessment{% endblock %}
-{% block content %}
-
-<!-- Hero -->
-<section class="kg-hero">
-  <div class="container">
-    <div class="row align-items-center gy-4">
-      <div class="col-lg-7 fade-up">
-        <div class="hero-badge"><i class="bi bi-activity"></i> AI-Powered Screening</div>
-        <h1 class="hero-title">Kidney Health &amp;<br>CKD Risk Assessment</h1>
-        <p class="hero-sub mb-5">Early detection saves lives. Use our AI-powered platform to screen for chronic kidney disease risk in minutes.</p>
-
-        <!-- Two access cards -->
-        <div class="row g-4 mt-1">
-          <div class="col-sm-6">
-            <a href="/register" class="access-card text-decoration-none">
-              <div class="access-icon-lg" style="background:rgba(255,255,255,.15)">
-                <i class="bi bi-person-plus-fill"></i>
-              </div>
-              <div class="access-title-lg">Public Access</div>
-              <div class="access-sub-lg">Register a patient and run an AI-powered CKD risk assessment — no login needed.</div>
-              <div class="access-cta">Get Started <i class="bi bi-arrow-right ms-1"></i></div>
-            </a>
-          </div>
-          <div class="col-sm-6">
-            <a href="/doctor/login" class="access-card text-decoration-none" style="background:rgba(13,148,136,.2);border-color:rgba(13,148,136,.45)">
-              <div class="access-icon-lg" style="background:rgba(13,148,136,.3)">
-                <i class="bi bi-shield-lock-fill"></i>
-              </div>
-              <div class="access-title-lg">Doctor / Admin</div>
-              <div class="access-sub-lg">View all patient records, search, manage and analyse screening history.</div>
-              <div class="access-cta">Sign In <i class="bi bi-arrow-right ms-1"></i></div>
-            </a>
-          </div>
-        </div>
-      </div>
-
-      <div class="col-lg-5 fade-up-2">
-        <div class="row g-3">
-          <div class="col-6"><div class="hero-stat"><div class="hero-stat-num">850M+</div><div class="hero-stat-label">People affected globally</div></div></div>
-          <div class="col-6"><div class="hero-stat"><div class="hero-stat-num">90%</div><div class="hero-stat-label">Unaware of condition</div></div></div>
-          <div class="col-6"><div class="hero-stat"><div class="hero-stat-num">10x</div><div class="hero-stat-label">Higher cardiovascular risk</div></div></div>
-          <div class="col-6"><div class="hero-stat"><div class="hero-stat-num">AI</div><div class="hero-stat-label">Explainable predictions</div></div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- About Kidneys -->
-<section class="py-5">
-  <div class="container">
-    <div class="row align-items-center gy-4">
-      <div class="col-lg-5">
-        <span class="section-pill">About Kidneys</span>
-        <h2 class="section-title mb-3">The Body's Natural Filter</h2>
-        <p class="text-muted">Your kidneys filter about 200 litres of blood daily, removing waste and excess fluids. Chronic Kidney Disease (CKD) occurs when kidneys are damaged and can't filter blood effectively — it develops silently over years, making early screening critical.</p>
-        <a href="/education/diseases" class="btn btn-primary rounded-pill mt-2 px-4">Learn More <i class="bi bi-arrow-right ms-1"></i></a>
-      </div>
-      <div class="col-lg-7">
-        <div class="row g-3">
-          {% for icon,color,title,desc in [
-            ("bi-funnel-fill","#1a6fc4","Filter Blood","Remove waste, toxins and excess water daily."),
-            ("bi-droplet-fill","#0d9488","Balance Fluids","Regulate sodium, potassium and fluid levels."),
-            ("bi-heart-pulse-fill","#dc2626","Control BP","Produce hormones that regulate blood pressure."),
-            ("bi-capsule","#7c3aed","Produce Hormones","Stimulate red blood cell production via EPO.")
-          ] %}
-          <div class="col-md-6">
-            <div class="info-card">
-              <div class="icon-wrap" style="background:{{ color }}18;color:{{ color }}"><i class="bi {{ icon }}"></i></div>
-              <h6 class="fw-600 mb-1">{{ title }}</h6>
-              <p class="text-muted small mb-0">{{ desc }}</p>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- Causes -->
-<section class="py-5" style="background:#fff">
-  <div class="container">
-    <div class="text-center mb-4">
-      <span class="section-pill">Causes</span>
-      <h2 class="section-title">Major Causes of Kidney Disease</h2>
-    </div>
-    <div class="row g-3">
-      {% for icon,color,title,desc in [
-        ("bi-droplet-half","#dc2626","Diabetes","High blood sugar damages kidney blood vessels over time."),
-        ("bi-thermometer-high","#d97706","Hypertension","Uncontrolled high BP strains and damages kidney vessels."),
-        ("bi-virus","#7c3aed","Glomerulonephritis","Inflammation of kidney filtering units reduces function."),
-        ("bi-gem","#0d9488","Kidney Stones","Recurring stones cause blockages and scarring of kidney tissue."),
-        ("bi-capsule-pill","#1a6fc4","Overuse of NSAIDs","Long-term painkillers like ibuprofen harm kidney function."),
-        ("bi-person-fill","#6b7280","Family History","Genetic conditions like PKD increase CKD risk significantly.")
-      ] %}
-      <div class="col-md-6 col-lg-4">
-        <div class="info-card">
-          <div class="icon-wrap" style="background:{{ color }}18;color:{{ color }}"><i class="bi {{ icon }}"></i></div>
-          <h6 class="fw-600 mb-1">{{ title }}</h6>
-          <p class="text-muted small mb-0">{{ desc }}</p>
-        </div>
-      </div>
-      {% endfor %}
-    </div>
-  </div>
-</section>
-
-<!-- Symptoms -->
-<section class="py-5">
-  <div class="container">
-    <div class="row align-items-center gy-4">
-      <div class="col-lg-5">
-        <span class="section-pill">Warning Signs</span>
-        <h2 class="section-title mb-3">Symptoms of Kidney Problems</h2>
-        <p class="text-muted">CKD is called a "silent disease" — symptoms appear only in later stages. Watch for these warning signs:</p>
-      </div>
-      <div class="col-lg-7">
-        <div class="row g-2">
-          {% for s in ["Swelling in ankles and feet","Fatigue and weakness","Decreased urine output","Foamy or dark urine","Shortness of breath","Nausea and vomiting","High blood pressure","Back pain near kidneys"] %}
-          <div class="col-md-6">
-            <div class="d-flex align-items-center gap-2 p-3 bg-white rounded-3 border">
-              <i class="bi bi-exclamation-circle-fill text-danger"></i>
-              <span class="small fw-500">{{ s }}</span>
-            </div>
-          </div>
-          {% endfor %}
-        </div>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- CTA -->
-<section class="py-5" style="background:#fff">
-  <div class="container">
-    <div class="kg-card p-5 text-center" style="background:linear-gradient(135deg,#0f3460,#1a6fc4,#0d9488);color:#fff;border:none">
-      <h2 class="section-title text-white mb-2">Check Your Kidney Risk Today</h2>
-      <p class="mb-4 opacity-75">Register a patient and run an AI-powered CKD risk assessment in minutes — no login required.</p>
-      <a href="/register" class="btn btn-light btn-lg rounded-pill px-5 fw-600">
-        <i class="bi bi-person-plus me-2"></i>Start Screening
-      </a>
-    </div>
-  </div>
-</section>
-
-<style>
-.access-card{
-  display:flex;flex-direction:column;align-items:flex-start;gap:.6rem;
-  background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.28);
-  border-radius:18px;padding:1.5rem 1.4rem;color:#fff;
-  transition:background .25s,transform .2s,box-shadow .2s;
-  height:100%;
-}
-.access-card:hover{background:rgba(255,255,255,.2);transform:translateY(-4px);
-  box-shadow:0 12px 32px rgba(0,0,0,.2);color:#fff}
-.access-icon-lg{width:52px;height:52px;border-radius:13px;display:flex;align-items:center;
-  justify-content:center;font-size:1.5rem;flex-shrink:0;margin-bottom:.3rem}
-.access-title-lg{font-weight:700;font-size:1.1rem;line-height:1.2;letter-spacing:-.01em}
-.access-sub-lg{font-size:.82rem;opacity:.78;line-height:1.55;margin-top:.1rem}
-.access-cta{font-size:.82rem;font-weight:600;opacity:.9;margin-top:.4rem;
-  display:flex;align-items:center}
-</style>
-{% endblock %}
-
-{% extends "base.html" %}
 {% block title %}CKD Prediction System — Home{% endblock %}
 {% block content %}
 
@@ -196,7 +29,7 @@
       <!-- LEFT: TEXT + CTA -->
       <div class="col-lg-6 fade-up">
         <div class="section-pill" style="background:rgba(255,255,255,.15);color:#fff;margin-bottom:1.5rem">
-          <i class="bi bi-cpu me-1"></i>Machine Learning · XGBoost · SHAP
+          <i class="bi bi-cpu me-1"></i>Machine Learning · RandomForest · SHAP
         </div>
         <h1 style="font-family:'Lora',serif;font-size:2.8rem;font-weight:600;color:#fff;line-height:1.18;margin-bottom:1rem">
           Chronic Kidney Disease<br>Prediction System
@@ -538,8 +371,8 @@
     <div class="row g-4 fade-up-2">
       {% for step,icon,color,title,desc in [
         ("01","bi-person-plus","#1a5fb4","Register Patient","Enter patient name, age and gender to generate a unique Patient ID."),
-        ("02","bi-clipboard2-pulse","#0d9488","Enter Clinical Data","Input 10 medical parameters across blood, urine and clinical sections."),
-        ("03","bi-cpu","#7c3aed","AI Analysis","XGBoost model trained on 400 UCI CKD patients instantly analyzes the data."),
+        ("02","bi-clipboard2-pulse","#0d9488","Enter Clinical Data","Input 24 medical parameters across blood, urine and clinical sections."),
+        ("03","bi-cpu","#7c3aed","AI Analysis","RandomForest model trained on 400 UCI CKD patients instantly analyzes the data."),
         ("04","bi-bar-chart-line","#16a34a","Get Explainable Result","Receive a risk score, confidence level and SHAP feature contributions.")
       ] %}
       <div class="col-md-6 col-lg-3">
