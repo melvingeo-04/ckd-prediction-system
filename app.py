@@ -20,39 +20,33 @@ if os.path.exists(MODEL_PATH):
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
 
-# ── Feature config — updated for RandomForest (24 features) ──
-FEATURES = ["age","bp","sg","al","su","rbc","pc","pcc","ba",
-            "bgr","bu","sc","sod","pot","hemo","pcv","wc","rc",
-            "htn","dm","cad","appet","pe","ane"]
+# ── 10 core input features — easy to collect clinically ──────
+FEATURES = ["age","bp","sc","bu","hemo","bgr","al","sg","htn","dm"]
 
 FEATURE_LABELS = {
-    "age":   "Age (years)",
-    "bp":    "Blood Pressure (mm/Hg)",
-    "sg":    "Specific Gravity",
-    "al":    "Albumin",
-    "su":    "Sugar",
-    "rbc":   "Red Blood Cells",
-    "pc":    "Pus Cell",
-    "pcc":   "Pus Cell Clumps",
-    "ba":    "Bacteria",
-    "bgr":   "Blood Glucose Random (mgs/dl)",
-    "bu":    "Blood Urea (mgs/dl)",
-    "sc":    "Serum Creatinine (mgs/dl)",
-    "sod":   "Sodium (mEq/L)",
-    "pot":   "Potassium (mEq/L)",
-    "hemo":  "Hemoglobin (gms)",
-    "pcv":   "Packed Cell Volume",
-    "wc":    "White Blood Cell Count",
-    "rc":    "Red Blood Cell Count",
-    "htn":   "Hypertension",
-    "dm":    "Diabetes Mellitus",
-    "cad":   "Coronary Artery Disease",
-    "appet": "Appetite",
-    "pe":    "Pedal Edema",
-    "ane":   "Anemia",
+    "age":  "Age (years)",
+    "bp":   "Blood Pressure (mm/Hg)",
+    "sc":   "Serum Creatinine (mgs/dl)",
+    "bu":   "Blood Urea (mgs/dl)",
+    "hemo": "Hemoglobin (gms)",
+    "bgr":  "Blood Glucose Random (mgs/dl)",
+    "al":   "Albumin",
+    "sg":   "Specific Gravity",
+    "htn":  "Hypertension",
+    "dm":   "Diabetes Mellitus",
 }
 
-ALL_FEATURES = FEATURES.copy()
+# All 24 model features — fallback if model file not loaded yet
+ALL_FEATURES = ["age","bp","sg","al","su","rbc","pc","pcc","ba","bgr",
+                "bu","sc","sod","pot","hemo","pcv","wc","rc",
+                "htn","dm","cad","appet","pe","ane"]
+
+# Defaults for the 14 features not collected from the form
+# These are typical healthy values — model trained on the same UCI population
+DEFAULTS = {"su":0,"rbc":1,"pc":1,"pcc":0,"ba":0,
+            "sod":135,"pot":4.5,"pcv":44,"wc":7800,"rc":5.2,
+            "wbcc":7800,"rbcc":5.2,
+            "cad":0,"appet":1,"pe":0,"ane":0}
 
 # Override from model if available
 if model is not None:
@@ -60,6 +54,7 @@ if model is not None:
         imp = model.named_steps["imputer"]
         if hasattr(imp, "feature_names_in_"):
             ALL_FEATURES = list(imp.feature_names_in_)
+            DEFAULTS.update({c: DEFAULTS.get(c, 0) for c in ALL_FEATURES})
             print(f"[OK] Model features ({len(ALL_FEATURES)}): {ALL_FEATURES}")
     except Exception as e:
         print(f"[WARN] Could not read model features: {e}")
@@ -107,12 +102,12 @@ def row_to_dict(row):
 
 # ── Helpers ──────────────────────────────────────────────────
 def build_full_row(inp):
-    row = {}
-    for k in ALL_FEATURES:
-        try:
-            row[k] = float(inp[k])
-        except (KeyError, TypeError, ValueError):
-            row[k] = float('nan')
+    """Build a DataFrame row with all 24 model features.
+    Start from DEFAULTS (healthy baseline for 14 non-form features),
+    then overlay the 10 values the user actually entered.
+    """
+    row = dict(DEFAULTS)
+    row.update({k: float(inp[k]) for k in FEATURES if k in inp})
     return pd.DataFrame([[row[f] for f in ALL_FEATURES]], columns=ALL_FEATURES)
 
 def shap_chart(shap_vals, feature_vals):
@@ -217,15 +212,9 @@ def public_predict(pid):
             if isinstance(shap_all, list): sv = shap_all[1][0]
             elif shap_all.ndim == 3:       sv = shap_all[0, :, 1]
             else:                          sv = shap_all[0]
-            # Map ALL_FEATURES indices to FEATURES
-            shap_vals = []
-            for f in FEATURES:
-                if f in ALL_FEATURES:
-                    shap_vals.append(float(sv[ALL_FEATURES.index(f)]))
-                else:
-                    shap_vals.append(0.0)
-            shap_vals = np.array(shap_vals)
-            chart_b64 = shap_chart(shap_vals, df[FEATURES].values[0] if set(FEATURES).issubset(set(df.columns)) else [0]*len(FEATURES))
+            feat_idx  = [ALL_FEATURES.index(f) for f in FEATURES]
+            shap_vals = sv[feat_idx]
+            chart_b64 = shap_chart(shap_vals, df[FEATURES].values[0])
             order     = np.argsort(np.abs(shap_vals))[::-1]
             explanations = [
                 f"{FEATURE_LABELS[FEATURES[i]]} {'increased' if shap_vals[i]>0 else 'lowered'} the predicted risk."
