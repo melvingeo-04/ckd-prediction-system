@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Kidney Friendly Diet{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="mb-5 fade-up"><span class="section-pill">Nutrition</span><h2 class="section-title">Kidney Friendly Diet</h2><p class="text-muted">What you eat directly impacts kidney health. A kidney-friendly diet reduces the burden on damaged kidneys.</p></div>
+  <div class="row g-4">
+    <div class="col-lg-6 fade-up">
+      <div class="kg-card h-100">
+        <div class="kg-card-header" style="background:linear-gradient(135deg,#16a34a,#0d9488)"><i class="bi bi-check-circle me-2"></i>Foods to Eat</div>
+        <div class="p-4">
+          {% set good = [("🫐","Berries","Low in potassium, high in antioxidants. Blueberries, strawberries protect kidney cells."),("🥚","Egg Whites","High-quality protein with less phosphorus than egg yolks. Ideal for CKD patients."),("🧅","Cauliflower","Low in potassium and phosphorus, high in vitamin C and folate."),("🫚","Olive Oil","Anti-inflammatory fats that protect kidneys and heart."),("🐟","Fatty Fish","Omega-3 fatty acids reduce inflammation and lower CKD progression risk."),("🍎","Apples","High in fibre and anti-inflammatory compounds; low in potassium.")] %}
+          {% for emoji,name,desc in good %}
+          <div class="d-flex gap-3 mb-3">
+            <div class="fs-4">{{ emoji }}</div>
+            <div><div class="fw-600 small">{{ name }}</div><div class="text-muted" style="font-size:.8rem">{{ desc }}</div></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6 fade-up-2">
+      <div class="kg-card h-100">
+        <div class="kg-card-header" style="background:linear-gradient(135deg,#dc2626,#d97706)"><i class="bi bi-x-circle me-2"></i>Foods to Avoid</div>
+        <div class="p-4">
+          {% set bad = [("🧂","High Salt / Sodium","Raises blood pressure. Avoid processed foods, chips, pickles, canned soups."),("🥩","Red Meat","High in protein and phosphorus. Excess strains kidneys. Limit to small portions."),("🍌","High Potassium Foods","Bananas, oranges, potatoes — high potassium is dangerous in CKD stages 3–5."),("🥛","Dairy Products","High in phosphorus. Limit milk, cheese, and yogurt if phosphorus is elevated."),("🥤","Sugary Drinks","Cola contains phosphoric acid, harmful to kidneys. Avoid all sugary sodas."),("🍺","Alcohol","Dehydrates the body and increases blood pressure, accelerating CKD damage.")] %}
+          {% for emoji,name,desc in bad %}
+          <div class="d-flex gap-3 mb-3">
+            <div class="fs-4">{{ emoji }}</div>
+            <div><div class="fw-600 small">{{ name }}</div><div class="text-muted" style="font-size:.8rem">{{ desc }}</div></div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-12 fade-up-3">
+      <div class="kg-card p-4" style="border-left:4px solid var(--primary)">
+        <i class="bi bi-info-circle text-primary me-2"></i>
+        <strong>Important:</strong> Dietary needs vary by CKD stage. Always consult a renal dietitian for a personalised plan. Restrictions on potassium and phosphorus apply primarily to stages 3–5.
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

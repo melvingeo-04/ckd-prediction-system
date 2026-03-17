@@ -1,0 +1,29 @@
+{% extends "base.html" %}
+{% block title %}Risk Factors{% endblock %}
+{% block content %}
+<div class="container py-5">
+  <div class="mb-5 fade-up"><span class="section-pill">Education</span><h2 class="section-title">CKD Risk Factors</h2><p class="text-muted">Know the factors that increase your risk of developing chronic kidney disease.</p></div>
+  <div class="row g-4">
+    {% set risks = [
+      ("bi-droplet-half","#dc2626","Diabetes Mellitus","Diabetes is the leading cause of CKD worldwide. High blood sugar damages the kidneys' filtering vessels (glomeruli) over time. People with diabetes should have annual kidney function tests.","Risk level: Very High"),
+      ("bi-thermometer-high","#d97706","High Blood Pressure","Hypertension puts excessive pressure on kidney blood vessels, damaging them over years. CKD itself also raises blood pressure, creating a dangerous cycle.","Risk level: Very High"),
+      ("bi-person-fill","#7c3aed","Family History","Having a parent or sibling with CKD or kidney failure increases your risk. Genetic conditions like PKD are inherited and should be screened early.","Risk level: High"),
+      ("bi-calendar-fill","#1a6fc4","Age over 60","Kidney function naturally declines with age. Older adults are more susceptible to CKD due to reduced nephron count and reduced kidney reserve.","Risk level: Moderate"),
+      ("bi-lungs","#6b7280","Obesity","Excess body weight increases the risk of diabetes and hypertension — both leading causes of CKD. Obesity also directly stresses the kidneys through hyperfiltration.","Risk level: Moderate"),
+      ("bi-fire","#ef4444","Smoking","Smoking reduces blood flow to the kidneys, accelerates CKD progression, and increases proteinuria. Smokers with diabetes have extremely high CKD risk.","Risk level: High"),
+      ("bi-capsule","#0d9488","Long-term NSAID Use","Regular use of painkillers like ibuprofen and naproxen reduces blood flow to kidneys, causing chronic damage. Always use the minimum necessary dose.","Risk level: Moderate"),
+      ("bi-heart-fill","#e11d48","Cardiovascular Disease","Heart disease and CKD are closely linked. Reduced cardiac output affects kidney perfusion, and CKD accelerates heart disease progression.","Risk level: High")
+    ] %}
+    {% for icon,color,title,desc,note in risks %}
+    <div class="col-md-6 fade-up">
+      <div class="edu-card">
+        <div class="edu-icon" style="color:{{ color }}"><i class="bi {{ icon }}"></i></div>
+        <h5 class="fw-700 mb-2">{{ title }}</h5>
+        <p class="text-muted small mb-2">{{ desc }}</p>
+        <span class="badge rounded-pill px-3 py-1" style="background:{{ color }}20;color:{{ color }}">{{ note }}</span>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+</div>
+{% endblock %}

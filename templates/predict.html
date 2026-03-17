@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% block title %}Predict CKD — {{ patient.name }}{% endblock %}
+{% block content %}
+{% if doctor %}
+<div class="consulting-bar">
+  <div class="container">
+    <span class="doc-chip"><i class="bi bi-person-badge"></i> Consulting: Dr. {{ doctor.name }}{% if doctor.specialization %} &nbsp;·&nbsp; {{ doctor.specialization }}{% endif %}</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+
+      <div class="mb-4 fade-up">
+        <a href="/patient/{{ patient.pid }}" class="text-muted small text-decoration-none">
+          <i class="bi bi-arrow-left me-1"></i>Back to Profile
+        </a>
+        <h2 class="section-title mt-2 mb-0">CKD Risk Prediction</h2>
+        <div class="d-flex align-items-center gap-2 mt-1">
+          <span class="pid-badge">{{ patient.pid }}</span>
+          <span class="text-muted small">{{ patient.name }} · {{ patient.age }} yrs</span>
+        </div>
+      </div>
+
+      <form method="POST" id="predictForm" class="fade-up-2">
+        <input type="hidden" name="age" value="{{ patient.age }}"/>
+
+        <!-- SECTION 1: Patient Information -->
+        <div class="section-group mb-3">
+          <div class="section-group-header">
+            <i class="bi bi-person-vcard"></i> Section 1 — Patient Information
+          </div>
+          <div class="section-group-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Age (years)</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                  <input type="text" class="form-control bg-light" value="{{ patient.age }} years" readonly/>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  Blood Pressure (mm/Hg)
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 60–90 mm/Hg · High BP damages kidney vessels</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
+                  <input type="number" step="any" name="bp" class="form-control"  min="50" max="200" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Normal range: 60 – 90 mm/Hg</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 2: Urine Test Parameters -->
+        <div class="section-group mb-3">
+          <div class="section-group-header">
+            <i class="bi bi-droplet-half"></i> Section 2 — Urine Test Parameters
+          </div>
+          <div class="section-group-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">
+                  Specific Gravity
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 1.005–1.025 · Measures urine concentration</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-eyedropper"></i></span>
+                  <input type="number" step="0.001" name="sg" class="form-control" min="1.005" max="1.025" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Normal: 1.005 – 1.025</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">
+                  Albumin
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 0 · Protein in urine = kidney filtration issue</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-beaker"></i></span>
+                  <input type="number" step="1" name="al" class="form-control"  min="0" max="5" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Scale: 0 (normal) to 5 (severe)</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">
+                  Sugar
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 0 · Sugar in urine indicates glucose problems</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-droplet"></i></span>
+                  <input type="number" step="1" name="su" class="form-control"  min="0" max="5" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Scale: 0 (normal) to 5 (severe)</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 3: Blood Test Parameters -->
+        <div class="section-group mb-3">
+          <div class="section-group-header">
+            <i class="bi bi-activity"></i> Section 3 — Blood Test Parameters
+          </div>
+          <div class="section-group-body">
+            <div class="row g-3">
+              <div class="col-md-4">
+                <label class="form-label">
+                  Serum Creatinine (mgs/dl)
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 0.7–1.3 mg/dL · Primary kidney filtration marker</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-droplet"></i></span>
+                  <input type="number" step="any" name="sc" class="form-control"  min="0.1" max="20" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Normal: 0.7 – 1.3 mgs/dl</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">
+                  Hemoglobin (gms)
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 12–17 gms · Low = possible kidney-related anemia</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-droplet-half"></i></span>
+                  <input type="number" step="any" name="hemo" class="form-control"  min="3" max="20" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Normal: 12 – 17 gms</div>
+              </div>
+              <div class="col-md-4">
+                <label class="form-label">
+                  Blood Urea (mgs/dl)
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 7–20 mgs/dl · Elevated = reduced kidney clearance</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-activity"></i></span>
+                  <input type="number" step="any" name="bu" class="form-control"  min="1" max="200" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Normal: 7 – 20 mgs/dl</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  Blood Glucose Random (mgs/dl)
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 70–140 mgs/dl · High glucose damages glomeruli</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-graph-up"></i></span>
+                  <input type="number" step="any" name="bgr" class="form-control"  min="50" max="500" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Normal: 70 – 140 mgs/dl</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">
+                  Packed Cell Volume (%)
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Normal: 36–50% · Low PCV indicates anemia</span></span>
+                </label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-bar-chart"></i></span>
+                  <input type="number" step="any" name="pcv" class="form-control"  min="10" max="60" required/>
+                </div>
+                <div class="text-muted" style="font-size:.7rem;margin-top:.25rem">Normal: 36 – 50%</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SECTION 4: Clinical Conditions -->
+        <div class="section-group mb-3">
+          <div class="section-group-header">
+            <i class="bi bi-clipboard2-heart"></i> Section 4 — Clinical Conditions
+          </div>
+          <div class="section-group-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Hypertension
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Hypertension is the 2nd leading cause of CKD</span></span>
+                </label>
+                <div class="d-flex gap-2">
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="htn" value="1" class="d-none" required/>
+                    <div class="toggle-btn"><i class="bi bi-check-circle me-1"></i>Yes</div>
+                  </label>
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="htn" value="0" class="d-none"/>
+                    <div class="toggle-btn"><i class="bi bi-x-circle me-1"></i>No</div>
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Diabetes Mellitus
+                  <span class="field-tooltip"><i class="bi bi-info-circle"></i><span class="tip">Diabetes is the #1 cause of CKD globally</span></span>
+                </label>
+                <div class="d-flex gap-2">
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="dm" value="1" class="d-none" required/>
+                    <div class="toggle-btn"><i class="bi bi-check-circle me-1"></i>Yes</div>
+                  </label>
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="dm" value="0" class="d-none"/>
+                    <div class="toggle-btn"><i class="bi bi-x-circle me-1"></i>No</div>
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="btn btn-primary rounded-pill px-5 py-2 fw-600 w-100 fade-up-3" id="submitBtn" style="font-size:1rem">
+          <i class="bi bi-cpu me-2"></i>Run AI Prediction
+        </button>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll(".toggle-option input").forEach(r=>{
+  r.addEventListener("change",()=>{
+    document.querySelectorAll(`[name="${r.name}"] + .toggle-btn`).forEach(b=>b.style.background="");
+  });
+});
+document.getElementById("predictForm").addEventListener("submit",function(){
+  document.getElementById("loadingOverlay").classList.add("show");
+});
+</script>
+{% endblock %}

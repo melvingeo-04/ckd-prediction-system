@@ -1,0 +1,216 @@
+{% extends "base.html" %}
+{% block title %}Model Information — CKD Prediction System{% endblock %}
+{% block content %}
+
+<div class="container py-5">
+
+  <div class="mb-5 fade-up text-center">
+    <span class="section-pill">Technical Details</span>
+    <h2 class="section-title">Model Information</h2>
+    <p class="text-muted mt-2" style="max-width:540px;margin:auto">Details about the machine learning model powering this CKD prediction system.</p>
+  </div>
+
+  <!-- MODEL STATS -->
+  <div class="row g-3 mb-4 fade-up">
+    {% for icon,color,label,val in [
+      ("bi-cpu","#1a5fb4","Algorithm","RandomForest Classifier"),
+      ("bi-database","#0d9488","Dataset","UCI CKD Dataset"),
+      ("bi-people","#7c3aed","Samples","400 Patients"),
+      ("bi-list-check","#d97706","Features","24 Medical Attributes"),
+      ("bi-bullseye","#16a34a","Model Accuracy","100%"),
+      ("bi-graph-up","#dc2626","ROC AUC","1.000")
+    ] %}
+    <div class="col-md-4 col-lg-2">
+      <div class="ckd-card p-3 text-center h-100">
+        <div class="icon-wrap mx-auto mb-2" style="background:{{ color }}18;color:{{ color }}"><i class="bi {{ icon }}"></i></div>
+        <div class="fw-700" style="font-size:.95rem;color:var(--text)">{{ val }}</div>
+        <div class="text-muted" style="font-size:.7rem;margin-top:.2rem">{{ label }}</div>
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="row g-4">
+    <!-- LEFT COL -->
+    <div class="col-lg-5 fade-up">
+
+      <!-- Model details table -->
+      <div class="ckd-card mb-4">
+        <div class="ckd-card-header"><i class="bi bi-info-circle"></i> Model Details</div>
+        <div class="p-0">
+          <table class="table ckd-table mb-0">
+            <tbody>
+              {% for label,val in [
+                ("Algorithm","RandomForest (Ensemble of Decision Trees)"),
+                ("Dataset","UCI ML Repository — CKD Dataset (ID: 336)"),
+                ("Source","Apollo Hospital, India"),
+                ("Total Samples","400 patients"),
+                ("CKD Cases","250 patients (62.5%)"),
+                ("Non-CKD Cases","150 patients (37.5%)"),
+                ("Train Split","70% (280 patients)"),
+                ("Test Split","30% (120 patients)"),
+                ("Cross Validation","5-Fold Stratified KFold"),
+                ("CV Metric","Recall (minimize missed CKD)"),
+                ("Imputation","SimpleImputer (median strategy)"),
+                ("Scaling","StandardScaler (Z-score)"),
+                ("Class Balance","SMOTE oversampling"),
+                ("Explainability","SHAP (SHapley Additive exPlanations)")
+              ] %}
+              <tr>
+                <td class="text-muted small fw-500" style="width:45%">{{ label }}</td>
+                <td class="fw-500 small">{{ val }}</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Features used -->
+      <div class="ckd-card">
+        <div class="ckd-card-header"><i class="bi bi-list-check"></i> Features Used</div>
+        <div class="p-3">
+          {% for icon,color,feat,desc in [
+            ("bi-heart-pulse","#dc2626","Blood Pressure (bp)","mm/Hg — vascular stress on kidneys"),
+            ("bi-droplet","#1a5fb4","Serum Creatinine (sc)","mgs/dl — primary filtration marker"),
+            ("bi-activity","#d97706","Blood Urea (bu)","mgs/dl — kidney clearance indicator"),
+            ("bi-droplet-half","#7c3aed","Hemoglobin (hemo)","gms — anemia from EPO deficiency"),
+            ("bi-graph-up","#0d9488","Blood Glucose (bgr)","mgs/dl — diabetes-related damage"),
+            ("bi-beaker","#16a34a","Albumin (al)","0–5 scale — proteinuria severity"),
+            ("bi-eyedropper","#6b7280","Specific Gravity (sg)","urine concentration ability"),
+            ("bi-thermometer-high","#dc2626","Hypertension (htn)","yes/no — 2nd cause of CKD"),
+            ("bi-capsule","#d97706","Diabetes Mellitus (dm)","yes/no — #1 cause of CKD"),
+            ("bi-calendar3","#1a5fb4","Age","years — kidney function declines with age")
+          ] %}
+          <div class="d-flex align-items-center gap-2 py-2" style="border-bottom:1px solid var(--border)">
+            <div style="width:28px;height:28px;background:{{ color }}18;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+              <i class="bi {{ icon }}" style="color:{{ color }};font-size:.8rem"></i>
+            </div>
+            <div>
+              <div class="fw-600" style="font-size:.8rem">{{ feat }}</div>
+              <div class="text-muted" style="font-size:.7rem">{{ desc }}</div>
+            </div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+    </div>
+
+    <!-- RIGHT COL -->
+    <div class="col-lg-7 fade-up-2">
+
+      <!-- Performance table -->
+      <div class="ckd-card mb-4">
+        <div class="ckd-card-header"><i class="bi bi-bar-chart-line"></i> Model Performance Comparison</div>
+        <div class="table-responsive">
+          <table class="table ckd-table mb-0">
+            <thead>
+              <tr>
+                <th>Model</th><th>Accuracy</th><th>Precision</th><th>Recall</th><th>F1</th><th>CV Recall</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for model,acc,prec,rec,f1,cvr,best in [
+                ("RandomForest","1.0000","1.0000","1.0000","1.0000","0.9943",true),
+                ("XGBoost","1.0000","1.0000","1.0000","1.0000","0.9714",false),
+                ("ANN","0.9917","1.0000","0.9867","0.9933","0.9886",false),
+                ("SVM","0.9833","1.0000","0.9733","0.9865","0.9829",false),
+                ("AdaBoost","0.9833","1.0000","0.9733","0.9865","0.9771",false)
+              ] %}
+              <tr {% if best %}style="background:#eff6ff;font-weight:600"{% endif %}>
+                <td>
+                  {{ model }}
+                  {% if best %}<span class="ms-1 badge rounded-pill" style="background:#1a5fb4;font-size:.65rem">Best</span>{% endif %}
+                </td>
+                <td>{{ acc }}</td><td>{{ prec }}</td><td>{{ rec }}</td><td>{{ f1 }}</td>
+                <td><strong>{{ cvr }}</strong></td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Confusion matrix -->
+      <div class="ckd-card mb-4">
+        <div class="ckd-card-header"><i class="bi bi-grid"></i> Confusion Matrix — RandomForest</div>
+        <div class="p-4">
+          <div class="row g-2" style="max-width:320px;margin:auto">
+            {% for bg,txt,label,val in [
+              ("#dbeafe","#1e3a8a","True Negative (TN)","45"),
+              ("#fee2e2","#7f1d1d","False Positive (FP)","0"),
+              ("#fef9c3","#713f12","False Negative (FN)","0"),
+              ("#dcfce7","#14532d","True Positive (TP)","75")
+            ] %}
+            <div class="col-6">
+              <div style="background:{{ bg }};border-radius:12px;padding:1rem;text-align:center">
+                <div style="font-size:1.8rem;font-weight:700;color:{{ txt }}">{{ val }}</div>
+                <div style="font-size:.7rem;color:{{ txt }};opacity:.8;margin-top:.2rem">{{ label }}</div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+          <div class="text-center mt-3">
+            <span class="text-muted small">Zero misclassifications out of 120 test patients</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Charts -->
+      <div class="ckd-card mb-4">
+        <div class="ckd-card-header"><i class="bi bi-bar-chart"></i> Feature Importance (RandomForest)</div>
+        <div class="p-3">
+          {% for feat,score,color in [
+            ("Packed Cell Volume",17,"#1a5fb4"),
+            ("Hemoglobin",17,"#0d9488"),
+            ("Serum Creatinine",16,"#7c3aed"),
+            ("Specific Gravity",12,"#d97706"),
+            ("Red Blood Cell Count",8,"#dc2626"),
+            ("Hypertension",7,"#16a34a"),
+            ("Albumin",5,"#6b7280"),
+            ("Diabetes Mellitus",4,"#6b7280"),
+            ("Blood Urea",4,"#6b7280"),
+            ("Blood Glucose Random",3,"#6b7280")
+          ] %}
+          <div class="d-flex align-items-center gap-2 mb-2">
+            <div style="width:140px;font-size:.75rem;text-align:right;color:var(--muted);flex-shrink:0">{{ feat }}</div>
+            <div style="flex:1;height:20px;background:#f1f5f9;border-radius:999px;overflow:hidden">
+              <div style="height:100%;width:{{ score }}%;background:{{ color }};border-radius:999px;transition:width .8s ease"></div>
+            </div>
+            <div style="width:36px;font-size:.75rem;font-weight:600;color:var(--text)">{{ score }}%</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Why RandomForest -->
+      <div class="ckd-card">
+        <div class="ckd-card-header"><i class="bi bi-patch-check"></i> Why RandomForest Was Selected</div>
+        <div class="p-4">
+          <div class="row g-3">
+            {% for icon,color,title,desc in [
+              ("bi-trophy","#d97706","Highest CV Recall","CV Recall of 0.9943 — best across all 5 stratified folds, ensuring reliable generalization."),
+              ("bi-journal-check","#1a5fb4","Perfect Test Performance","Achieved flawless 1.0 Accuracy, Precision, Recall and F1 on the test set with zero misclassifications out of 120 patients."),
+              ("bi-bar-chart-line","#0d9488","SHAP Explainability","RandomForest's ensemble tree structure enables SHAP analysis, providing interpretable feature contributions for each prediction.")
+            ] %}
+            <div class="col-12">
+              <div class="d-flex gap-3 align-items-start">
+                <div style="width:36px;height:36px;background:{{ color }}18;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                  <i class="bi {{ icon }}" style="color:{{ color }}"></i>
+                </div>
+                <div>
+                  <div class="fw-600 small">{{ title }}</div>
+                  <div class="text-muted" style="font-size:.78rem;line-height:1.5">{{ desc }}</div>
+                </div>
+              </div>
+            </div>
+            {% endfor %}
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

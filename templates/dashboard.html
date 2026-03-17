@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+{% block title %}Doctor Dashboard{% endblock %}
+{% block content %}
+{% if doctor %}
+<div class="consulting-bar">
+  <div class="container">
+    <span class="doc-chip"><i class="bi bi-person-badge"></i> Dr. {{ doctor.name }}{% if doctor.specialization %} &nbsp;·&nbsp; {{ doctor.specialization }}{% endif %}{% if doctor.hospital %} &nbsp;·&nbsp; {{ doctor.hospital }}{% endif %}</span>
+  </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+
+  <!-- HEADER -->
+  <div class="row align-items-center mb-4 fade-up">
+    <div class="col">
+      <p class="text-muted mb-0 small">Welcome back,</p>
+      <h2 class="section-title mb-0">Dr. {{ doctor.name }}</h2>
+      <span class="text-muted small">{{ doctor.specialization or 'Physician' }}{% if doctor.hospital %} · {{ doctor.hospital }}{% endif %}</span>
+    </div>
+    <div class="col-auto d-flex gap-2">
+      <a href="/search" class="btn btn-outline-primary rounded-pill px-3 btn-sm">
+        <i class="bi bi-search me-1"></i>Search
+      </a>
+      <a href="/register" class="btn btn-primary rounded-pill px-4 btn-sm">
+        <i class="bi bi-person-plus me-1"></i>New Patient
+      </a>
+    </div>
+  </div>
+
+  <!-- STAT CARDS -->
+  <div class="row g-3 mb-4 fade-up-2">
+    <div class="col-sm-6 col-lg-3">
+      <div class="ckd-card p-4">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:#eff6ff;border-radius:12px;display:flex;align-items:center;justify-content:center">
+            <i class="bi bi-people fs-4" style="color:var(--primary)"></i>
+          </div>
+          <div>
+            <div style="font-size:1.8rem;font-weight:700;color:var(--primary);line-height:1">{{ patients|length }}</div>
+            <div class="text-muted small">Total Patients</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="ckd-card p-4">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:#fef2f2;border-radius:12px;display:flex;align-items:center;justify-content:center">
+            <i class="bi bi-cpu fs-4 text-danger"></i>
+          </div>
+          <div>
+            <div style="font-size:1.8rem;font-weight:700;color:#dc2626;line-height:1">{{ patients|length }}</div>
+            <div class="text-muted small">Total Predictions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="ckd-card p-4">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:#f0fdf4;border-radius:12px;display:flex;align-items:center;justify-content:center">
+            <i class="bi bi-shield-check fs-4 text-success"></i>
+          </div>
+          <div>
+            <div style="font-size:1.8rem;font-weight:700;color:#16a34a;line-height:1">AI</div>
+            <div class="text-muted small">SHAP Explainability</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="ckd-card p-4">
+        <div class="d-flex align-items-center gap-3">
+          <div style="width:48px;height:48px;background:#faf5ff;border-radius:12px;display:flex;align-items:center;justify-content:center">
+            <i class="bi bi-bar-chart-line fs-4" style="color:#7c3aed"></i>
+          </div>
+          <div>
+            <div style="font-size:1.8rem;font-weight:700;color:#7c3aed;line-height:1">98%</div>
+            <div class="text-muted small">Model Accuracy</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PATIENT TABLE -->
+  <div class="fade-up-2">
+    <div class="d-flex align-items-center justify-content-between mb-3">
+      <h5 class="fw-700 mb-0">Patient Predictions</h5>
+      <span class="text-muted small">{{ patients|length }} patient(s) registered</span>
+    </div>
+
+    {% if patients %}
+    <div class="ckd-card">
+      <div class="table-responsive">
+        <table class="table ckd-table mb-0">
+          <thead>
+            <tr>
+              <th>Patient ID</th>
+              <th>Name</th>
+              <th>Age</th>
+              <th>Gender</th>
+              <th>Result</th>
+              <th>Risk</th>
+              <th>Date</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+          {% for p in patients %}
+          <tr>
+            <td><span class="pid-badge">{{ p.pid }}</span></td>
+            <td class="fw-500">{{ p.name }}</td>
+            <td>{{ p.age }}</td>
+            <td>{{ p.gender or "—" }}</td>
+            <td>
+              {% if p.last_result is defined and p.last_result %}
+                {% if "CKD" in p.last_result and "Not" not in p.last_result %}
+                  <span class="risk-badge risk-high" style="font-size:.7rem;padding:.2rem .6rem"><i class="bi bi-x-circle-fill me-1"></i>CKD Detected</span>
+                {% else %}
+                  <span class="risk-badge risk-low" style="font-size:.7rem;padding:.2rem .6rem"><i class="bi bi-check-circle-fill me-1"></i>No CKD</span>
+                {% endif %}
+              {% else %}
+                <span class="text-muted small">Not tested</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if p.last_score is defined and p.last_score %}
+                <span class="fw-600" style="font-size:.85rem">{{ p.last_score }}%</span>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
+            <td class="text-muted small">{{ p.reg_date }}</td>
+            <td>
+              <div class="d-flex gap-1">
+                <a href="/patient/{{ p.pid }}" class="btn btn-sm btn-outline-primary rounded-pill" title="View Profile">
+                  <i class="bi bi-eye"></i>
+                </a>
+                <a href="/predict/{{ p.pid }}" class="btn btn-sm btn-primary rounded-pill" title="Run Prediction">
+                  <i class="bi bi-cpu"></i>
+                </a>
+                <button class="btn btn-sm btn-outline-danger rounded-pill" title="Delete"
+                  onclick="confirmDelete('{{ p.pid }}','{{ p.name }}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    {% else %}
+    <div class="ckd-card p-5 text-center">
+      <i class="bi bi-people fs-1 text-muted opacity-50 d-block mb-3"></i>
+      <h5 class="text-muted">No patients yet</h5>
+      <p class="text-muted small mb-3">Register your first patient to get started.</p>
+      <a href="/register" class="btn btn-primary rounded-pill px-4">
+        <i class="bi bi-person-plus me-2"></i>Register Patient
+      </a>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- QUICK STATS -->
+  <div class="row g-3 mt-4 fade-up-3">
+    <div class="col-lg-6">
+      <div class="ckd-card p-4">
+        <div class="ckd-card-header p-0 border-0 mb-3"><i class="bi bi-cpu"></i> ML Model Used</div>
+        <div class="d-flex flex-wrap gap-2">
+          {% for label,val in [("Algorithm","XGBoost"),("Dataset","UCI CKD (400 patients)"),("Features","10 medical attributes"),("Accuracy","98.33%"),("ROC AUC","0.999")] %}
+          <div style="background:#f8fafc;border:1px solid var(--border);border-radius:8px;padding:.4rem .8rem">
+            <div style="font-size:.65rem;color:var(--muted);font-weight:600">{{ label }}</div>
+            <div style="font-size:.82rem;font-weight:600;color:var(--text)">{{ val }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-6">
+      <div class="ckd-card p-4">
+        <div class="ckd-card-header p-0 border-0 mb-3"><i class="bi bi-link-45deg"></i> Quick Links</div>
+        <div class="d-flex flex-wrap gap-2">
+          <a href="/model-info" class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-bar-chart-line me-1"></i>Model Info</a>
+          <a href="/patients" class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-people me-1"></i>All Patients</a>
+          <a href="/search" class="btn btn-outline-primary btn-sm rounded-pill"><i class="bi bi-search me-1"></i>Search</a>
+          <a href="/register" class="btn btn-primary btn-sm rounded-pill"><i class="bi bi-person-plus me-1"></i>New Patient</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- DELETE MODAL -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:400px">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-body p-4 text-center">
+        <div class="mb-3 mx-auto" style="width:52px;height:52px;background:#fee2e2;border-radius:13px;display:flex;align-items:center;justify-content:center">
+          <i class="bi bi-trash text-danger fs-4"></i>
+        </div>
+        <h5 class="fw-700 mb-1">Delete Patient?</h5>
+        <p class="text-muted small mb-4">This will permanently delete <strong id="deleteName"></strong> and all their reports.</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <form id="deleteForm" method="POST">
+            <button type="submit" class="btn btn-danger rounded-pill px-4">
+              <i class="bi bi-trash me-1"></i>Delete
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+{% block scripts %}
+<script>
+function confirmDelete(pid, name){
+  document.getElementById("deleteName").textContent = name;
+  document.getElementById("deleteForm").action = "/delete_patient/" + pid;
+  new bootstrap.Modal(document.getElementById("deleteModal")).show();
+}
+</script>
+{% endblock %}

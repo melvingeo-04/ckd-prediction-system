@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Doctor Login — CKD Risk Assessment</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet"/>
+<link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet"/>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html, body {
+  height: 100%;
+  font-family: 'DM Sans', sans-serif;
+}
+
+body {
+  min-height: 100vh;
+  background: linear-gradient(145deg, #0f3460 0%, #1a6fc4 55%, #0d9488 100%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1rem;
+  gap: 1rem;
+}
+
+/* ── Brand ── */
+.brand-row {
+  display: flex;
+  align-items: center;
+  gap: .55rem;
+}
+.brand-logo {
+  width: 36px; height: 36px;
+  background: rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,.3);
+  border-radius: 9px;
+  display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
+}
+.brand-label {
+  color: #fff;
+  font-size: .88rem;
+  font-weight: 600;
+}
+
+/* ── Card outer — height animated ── */
+.card-outer {
+  width: 100%;
+  max-width: 390px;
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 20px 56px rgba(0,0,0,.26);
+  overflow: hidden;
+  position: relative;
+  transition: height .46s cubic-bezier(.77,0,.18,1);
+}
+
+/* ── Panels ── */
+.auth-panel {
+  width: 100%;
+  padding: 2.5rem 1.7rem 1.7rem;
+  position: absolute;
+  top: 0; left: 0;
+  transition: transform .46s cubic-bezier(.77,0,.18,1), opacity .36s ease;
+}
+.card-outer {
+  min-height: 360px;
+}
+#lp { transform: translateX(0);    opacity: 1; pointer-events: all; }
+#rp { transform: translateX(110%); opacity: 0; pointer-events: none; }
+.sw #lp { transform: translateX(-110%); opacity: 0; pointer-events: none; }
+.sw #rp { transform: translateX(0);     opacity: 1; pointer-events: all; }
+
+/* ── Panel text ── */
+.ptitle { font-size: 1.05rem; font-weight: 700; color: #1e293b; margin-bottom: .12rem; }
+.psub   { font-size: .76rem;  color: #64748b;   margin-bottom: 1.1rem; }
+
+/* ── Fields ── */
+.fld    { margin-bottom: .7rem; }
+.flabel { font-size: .76rem; font-weight: 600; color: #1e293b; margin-bottom: .22rem; display: block; }
+
+.input-group-text {
+  background: #e8f1fb;
+  border: 1.5px solid #dde4ef;
+  border-right: none;
+  color: #1a6fc4;
+  font-size: .83rem;
+  border-radius: 10px 0 0 10px !important;
+  padding: .44rem .62rem;
+}
+.form-control {
+  border: 1.5px solid #dde4ef;
+  border-left: none;
+  border-radius: 0 10px 10px 0 !important;
+  font-size: .84rem;
+  padding: .44rem .75rem;
+  transition: border-color .2s, box-shadow .2s;
+}
+.form-control:focus {
+  border-color: #1a6fc4;
+  box-shadow: 0 0 0 3px rgba(26,111,196,.1);
+  outline: none;
+}
+.frow { display: grid; grid-template-columns: 1fr 1fr; gap: .55rem; }
+
+/* ── Submit button ── */
+.btn-go {
+  background: linear-gradient(135deg, #1a6fc4, #0d9488);
+  border: none; color: #fff;
+  border-radius: 999px;
+  padding: .58rem; font-size: .86rem; font-weight: 600;
+  width: 100%; cursor: pointer;
+  transition: opacity .18s, transform .14s;
+  margin-top: .2rem;
+}
+.btn-go:hover  { opacity: .9; transform: translateY(-1px); }
+.btn-go:active { transform: translateY(0); }
+
+/* ── Switch row ── */
+.sw-row {
+  display: flex; align-items: center; gap: .55rem;
+  margin-top: .85rem;
+}
+.sw-row::before, .sw-row::after {
+  content: ''; flex: 1; height: 1px; background: #e8edf4;
+}
+.sw-txt { font-size: .74rem; color: #64748b; white-space: nowrap; }
+.sw-txt a { color: #1a6fc4; font-weight: 600; text-decoration: none; cursor: pointer; }
+.sw-txt a:hover { text-decoration: underline; }
+
+/* ── Alert ── */
+.amsg {
+  font-size: .75rem; padding: .38rem .7rem;
+  border-radius: 7px; margin-bottom: .75rem; border: none;
+}
+.amsg-err { background: #fee2e2; color: #b91c1c; }
+.amsg-ok  { background: #dcfce7; color: #15803d; }
+
+/* ── Back ── */
+.back-lnk { font-size: .76rem; }
+.back-lnk a { color: rgba(255,255,255,.72); text-decoration: none; }
+.back-lnk a:hover { color: #fff; }
+</style>
+</head>
+<body>
+
+<!-- Brand -->
+<div class="brand-row">
+  <div class="brand-logo">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
+      <path d="M12 2C9.5 2 7 4 7 7.5C7 10 8 12 8 14.5C8 17 6.5 19 5 20.5C6.5 21.5 8 22 9.5 22C11.5 22 13 20.5 13 18.5C13 16 12 14 12 11.5C12 9 13.5 7 15 5.5C14 3.5 13 2 12 2Z" fill="white" opacity="0.95"/>
+      <path d="M15 4C16.5 5.5 17 8 17 10C17 13 15.5 15 15.5 17.5C15.5 19.5 16.5 21 18 21.5C19 20 19.5 18 19.5 16C19.5 13 18 11 18 8.5C18 6.5 17 4.5 15.5 3C15.3 3.3 15.1 3.6 15 4Z" fill="white" opacity="0.7"/>
+    </svg>
+  </div>
+  <span class="brand-label">CKD Risk Assessment</span>
+</div>
+
+<!-- Card -->
+<div class="card-outer" id="co">
+
+  <!-- Login panel -->
+  <div class="auth-panel" id="lp">
+    <div class="ptitle">Doctor / Admin Login</div>
+    <div class="psub">Sign in to access patient records &amp; dashboard</div>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+      {% for cat, msg in messages %}
+      <div class="amsg {{ 'amsg-ok' if cat=='success' else 'amsg-err' }}">{{ msg }}</div>
+      {% endfor %}
+    {% endwith %}
+
+    <form method="POST" action="/doctor/login">
+      <div class="fld">
+        <label class="flabel">Username</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person-badge"></i></span>
+          <input type="text" name="username" class="form-control" placeholder="your username" required autofocus/>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="flabel">Password</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-lock"></i></span>
+          <input type="password" name="password" class="form-control" placeholder="••••••••" required/>
+        </div>
+      </div>
+      <button type="submit" class="btn-go">
+        <i class="bi bi-shield-lock me-1"></i> Sign In
+      </button>
+    </form>
+
+    <div class="sw-row">
+      <span class="sw-txt">New doctor? <a onclick="go('rp')">Create account</a></span>
+    </div>
+  </div>
+
+  <!-- Register panel -->
+  <div class="auth-panel" id="rp">
+    <div class="ptitle">Create Doctor Account</div>
+    <div class="psub">Register to manage patient records</div>
+
+    <form method="POST" action="/doctor/register">
+      <div class="fld">
+        <label class="flabel">Full Name <span style="color:#dc2626">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-person"></i></span>
+          <input type="text" name="name" class="form-control" placeholder="Dr. Rahul Menon" required/>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="flabel">Hospital / Clinic</label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-building"></i></span>
+          <input type="text" name="hospital" class="form-control" placeholder="City Hospital"/>
+        </div>
+      </div>
+      <div class="fld">
+        <label class="flabel">Email <span style="color:#dc2626">*</span></label>
+        <div class="input-group">
+          <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+          <input type="email" name="email" class="form-control" placeholder="doctor@hospital.com" required/>
+        </div>
+      </div>
+      <div class="frow fld">
+        <div>
+          <label class="flabel">Username <span style="color:#dc2626">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-at"></i></span>
+            <input type="text" name="username" class="form-control" placeholder="drrahul" required/>
+          </div>
+        </div>
+        <div>
+          <label class="flabel">Password <span style="color:#dc2626">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input type="password" name="password" class="form-control" placeholder="Min. 6" minlength="6" required/>
+          </div>
+        </div>
+      </div>
+      <input type="hidden" name="specialization" value=""/>
+      <button type="submit" class="btn-go">
+        <i class="bi bi-person-check me-1"></i> Create Account
+      </button>
+    </form>
+
+    <div class="sw-row">
+      <span class="sw-txt">Already registered? <a onclick="go('lp')">Sign in</a></span>
+    </div>
+  </div>
+
+</div><!-- /card-outer -->
+
+<div class="back-lnk">
+  <a href="/"><i class="bi bi-arrow-left me-1"></i>Back to home</a>
+</div>
+
+<script>
+  const co = document.getElementById("co");
+const lp = document.getElementById("lp");
+const rp = document.getElementById("rp");
+let cur = "lp";
+
+function measure(el) {
+  // Save current styles to restore them later
+  const originalVisibility = el.style.visibility;
+  const originalPosition = el.style.position;
+  
+  el.style.visibility = "hidden";
+  el.style.position = "relative";
+  const h = el.offsetHeight;
+  
+  el.style.position = originalPosition;
+  el.style.visibility = originalVisibility;
+  return h;
+}
+
+function go(target) {
+  if (target === cur) return;
+  if (target === "rp") {
+    co.classList.add("sw");
+    co.style.height = measure(rp) + "px";
+  } else {
+    co.classList.remove("sw");
+    co.style.height = measure(lp) + "px";
+  }
+  cur = target;
+}
+
+// Improved Initialization
+window.addEventListener("load", () => {
+
+  requestAnimationFrame(() => {
+
+    co.style.transition = "none";
+
+    lp.style.position = "relative";
+    const initialHeight = lp.offsetHeight;
+    lp.style.position = "";
+
+    co.style.height = initialHeight + "px";
+
+    requestAnimationFrame(() => {
+      co.style.transition = "height .46s cubic-bezier(.77,0,.18,1)";
+      {% if show_register %}go("rp");{% endif %}
+    });
+
+  });
+
+});
+</script>
+</body>
+</html>

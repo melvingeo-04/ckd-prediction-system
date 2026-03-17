@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block title %}All Patients{% endblock %}
+{% block content %}
+{% if doctor %}
+<div class="consulting-bar">
+  <div class="container">
+    <span class="doc-chip">
+      <i class="bi bi-person-badge"></i>
+      Consulting: Dr. {{ doctor.name }}{% if doctor.specialization %} &nbsp;·&nbsp; {{ doctor.specialization }}{% endif %}
+    </span>
+  </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+
+  <div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3 fade-up">
+    <div>
+      <h2 class="section-title mb-0">Patient Records</h2>
+      <p class="text-muted mb-0">{{ patients|length }} patient{{ 's' if patients|length != 1 }} registered</p>
+    </div>
+    <div class="d-flex gap-2">
+      <a href="/search" class="btn btn-outline-primary rounded-pill px-3">
+        <i class="bi bi-search me-1"></i>Search
+      </a>
+      <a href="/register" class="btn btn-primary rounded-pill px-4">
+        <i class="bi bi-person-plus me-1"></i>Register New
+      </a>
+    </div>
+  </div>
+
+  {% if patients %}
+  <div class="kg-card fade-up-2">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 kg-table">
+        <thead><tr>
+          <th>Patient ID</th><th>Name</th><th>Age</th><th>Gender</th><th>Registered</th><th>Actions</th>
+        </tr></thead>
+        <tbody>
+        {% for p in patients %}
+        <tr>
+          <td><span class="pid-badge">{{ p.pid }}</span></td>
+          <td class="fw-500">{{ p.name }}</td>
+          <td>{{ p.age }}</td>
+          <td>{{ p.gender or "—" }}</td>
+          <td class="text-muted small">{{ p.reg_date }}</td>
+          <td>
+            <div class="d-flex gap-1">
+              <a href="/patient/{{ p.pid }}" class="btn btn-sm btn-outline-primary rounded-pill" title="View Profile">
+                <i class="bi bi-eye"></i>
+              </a>
+              <a href="/predict/{{ p.pid }}" class="btn btn-sm btn-primary rounded-pill" title="CKD Test">
+                <i class="bi bi-cpu"></i>
+              </a>
+              <button class="btn btn-sm btn-outline-danger rounded-pill" title="Delete Patient"
+                onclick="confirmDelete('{{ p.pid }}', '{{ p.name }}')">
+                <i class="bi bi-trash"></i>
+              </button>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% else %}
+  <div class="text-center py-5 fade-up">
+    <i class="bi bi-people fs-1 text-muted d-block mb-3 opacity-50"></i>
+    <h5 class="text-muted">No patients registered yet</h5>
+    <a href="/register" class="btn btn-primary rounded-pill mt-2 px-4">
+      <i class="bi bi-person-plus me-2"></i>Register First Patient
+    </a>
+  </div>
+  {% endif %}
+
+</div>
+
+<!-- Delete Confirmation Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+  <div class="modal-dialog modal-dialog-centered" style="max-width:420px">
+    <div class="modal-content border-0 shadow-lg rounded-4">
+      <div class="modal-body p-4 text-center">
+        <div class="mb-3" style="width:56px;height:56px;background:#fee2e2;border-radius:14px;display:flex;align-items:center;justify-content:center;margin:0 auto">
+          <i class="bi bi-trash fs-4 text-danger"></i>
+        </div>
+        <h5 class="fw-700 mb-1">Delete Patient?</h5>
+        <p class="text-muted small mb-4">This will permanently delete <strong id="deleteName"></strong> and all their test reports. This cannot be undone.</p>
+        <div class="d-flex gap-2 justify-content-center">
+          <button class="btn btn-outline-secondary rounded-pill px-4" data-bs-dismiss="modal">Cancel</button>
+          <form id="deleteForm" method="POST">
+            <button type="submit" class="btn btn-danger rounded-pill px-4">
+              <i class="bi bi-trash me-1"></i>Delete
+            </button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+{% endblock %}
+{% block scripts %}
+<script>
+function confirmDelete(pid, name) {
+  document.getElementById("deleteName").textContent = name;
+  document.getElementById("deleteForm").action = "/delete_patient/" + pid;
+  new bootstrap.Modal(document.getElementById("deleteModal")).show();
+}
+</script>
+{% endblock %}

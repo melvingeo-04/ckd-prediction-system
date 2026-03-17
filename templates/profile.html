@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block title %}{{ patient.name }}{% endblock %}
+{% block content %}
+{% if doctor %}
+<div class="consulting-bar">
+  <div class="container">
+    <span class="doc-chip">
+      <i class="bi bi-person-badge"></i>
+      Consulting: Dr. {{ doctor.name }}{% if doctor.specialization %} &nbsp;·&nbsp; {{ doctor.specialization }}{% endif %}
+    </span>
+  </div>
+</div>
+{% endif %}
+
+<div class="container py-5">
+
+  <!-- Header — name + PID only, no redundant info below -->
+  <div class="row align-items-center mb-4 fade-up">
+    <div class="col">
+      <a href="/patients" class="text-muted small text-decoration-none"><i class="bi bi-arrow-left me-1"></i>All Patients</a>
+      <div class="d-flex align-items-center gap-3 mt-2 flex-wrap">
+        <div class="patient-avatar">{{ patient.name[0].upper() }}</div>
+        <div>
+          <h2 class="mb-1 fw-700">{{ patient.name }}</h2>
+          <span class="pid-badge">{{ patient.pid }}</span>
+        </div>
+      </div>
+    </div>
+    <div class="col-auto">
+      <a href="/predict/{{ patient.pid }}" class="btn btn-primary rounded-pill px-3 py-2" style="font-size:.875rem">
+        <i class="bi bi-cpu me-1"></i>New CKD Test
+      </a>
+    </div>
+  </div>
+
+  <div class="row g-4">
+
+    <!-- Patient details card — col-lg-3 for narrower left card -->
+    <div class="col-lg-3 fade-up">
+      <div class="kg-card h-100">
+        <div class="kg-card-header"><i class="bi bi-person-circle me-2"></i>Patient Details</div>
+        <div class="p-4">
+          {% set fields = [
+            ("bi-person","Gender",    patient.gender or "—"),
+            ("bi-calendar3","Age",    (patient.age|string) + " years"),
+            ("bi-calendar-check","Registered", patient.reg_date)
+          ] %}
+          {% for icon,label,val in fields %}
+          <div class="d-flex align-items-start gap-3 mb-3">
+            <div class="icon-wrap flex-shrink-0" style="width:36px;height:36px;background:var(--primary-light);color:var(--primary);border-radius:9px">
+              <i class="bi {{ icon }} small"></i>
+            </div>
+            <div>
+              <div class="text-muted" style="font-size:.75rem">{{ label }}</div>
+              <div class="fw-500 small">{{ val }}</div>
+            </div>
+          </div>
+          {% endfor %}
+          <div class="mt-3 pt-3 border-top text-center">
+            <div class="text-muted small">Total Reports</div>
+            <div class="fs-2 fw-700 text-primary">{{ reports|length }}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Reports — col-lg-9 for wider right card -->
+    <div class="col-lg-9 fade-up-2">
+      <div class="kg-card">
+        <div class="kg-card-header d-flex justify-content-between align-items-center">
+          <span><i class="bi bi-clipboard-pulse me-2"></i>Test Reports</span>
+          <a href="/predict/{{ patient.pid }}" class="btn btn-sm btn-light rounded-pill px-3">
+            <i class="bi bi-plus-lg me-1"></i>Add Test
+          </a>
+        </div>
+        <div class="p-0">
+          {% if reports %}
+          <div class="table-responsive">
+            <table class="table table-hover mb-0 kg-table">
+              <thead><tr>
+                <th>Date</th><th>Risk Score</th><th>Risk Level</th><th>Details</th>
+              </tr></thead>
+              <tbody>
+              {% for r in reports %}
+              <tr>
+                <td class="small">{{ r.test_date }}</td>
+                <td>
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="progress flex-grow-1" style="height:6px;border-radius:3px;width:80px">
+                      <div class="progress-bar {% if r.score < 30 %}bg-success{% elif r.score < 60 %}bg-warning{% else %}bg-danger{% endif %}"
+                           style="width:{{ r.score }}%"></div>
+                    </div>
+                    <span class="fw-600 small">{{ r.score }}%</span>
+                  </div>
+                </td>
+                <td>
+                  <span class="risk-badge {% if 'Low' in r.level %}risk-low{% elif 'Moderate' in r.level %}risk-moderate{% else %}risk-high{% endif %}">
+                    <i class="bi {% if 'Low' in r.level %}bi-check-circle{% elif 'Moderate' in r.level %}bi-exclamation-circle{% else %}bi-x-circle{% endif %}"></i>
+                    {{ r.level }}
+                  </span>
+                </td>
+                <td>
+                  <a href="/result/{{ r.report_id }}" class="btn btn-sm btn-outline-primary rounded-pill px-3">
+                    <i class="bi bi-eye me-1"></i>View
+                  </a>
+                </td>
+              </tr>
+              {% endfor %}
+              </tbody>
+            </table>
+          </div>
+          {% else %}
+          <div class="text-center py-5 text-muted">
+            <i class="bi bi-clipboard-x fs-1 d-block mb-2 opacity-50"></i>
+            <p class="mb-3">No test reports yet.</p>
+            <a href="/predict/{{ patient.pid }}" class="btn btn-primary rounded-pill px-4" style="font-size:.875rem">
+              <i class="bi bi-cpu me-2"></i>Run First CKD Test
+            </a>
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+
+
+<style>
+.patient-avatar{width:52px;height:52px;background:linear-gradient(135deg,var(--primary),var(--teal));
+  border-radius:13px;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:1.4rem;font-weight:700;flex-shrink:0}
+</style>
+{% endblock %}

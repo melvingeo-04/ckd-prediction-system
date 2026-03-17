@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>CKD Risk Assessment — Login</title>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=Playfair+Display:wght@600&display=swap" rel="stylesheet"/>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'DM Sans',sans-serif;min-height:100vh;display:flex;overflow:hidden}
+
+/* ── Left panel ── */
+.left-panel{
+  width:45%;flex-shrink:0;
+  background:linear-gradient(145deg,#0f3460 0%,#1a6fc4 55%,#0d9488 100%);
+  display:flex;flex-direction:column;justify-content:space-between;padding:2.5rem;
+}
+.left-logo{width:40px;height:40px;background:rgba(255,255,255,.18);border-radius:10px;
+  display:flex;align-items:center;justify-content:center}
+.left-brand{display:flex;align-items:center;gap:.6rem;margin-bottom:0}
+.left-brand-name{color:#fff;font-size:.95rem;font-weight:600}
+.left-title{color:#fff;font-family:'Playfair Display',serif;font-size:2.2rem;
+  line-height:1.25;max-width:320px;margin:2rem 0 .75rem}
+.left-sub{color:rgba(255,255,255,.72);font-size:.9rem;max-width:300px;line-height:1.6}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem}
+.stat-box{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.2);
+  border-radius:12px;padding:.9rem .5rem;text-align:center}
+.stat-num{color:#fff;font-size:1.3rem;font-weight:700}
+.stat-label{color:rgba(255,255,255,.65);font-size:.68rem;margin-top:.15rem}
+
+/* ── Right panel ── */
+.right-panel{
+  flex:1;background:#f4f7fb;
+  display:flex;align-items:center;justify-content:center;
+  padding:2rem;overflow:hidden;
+}
+
+/* ── Outer wrapper — animates height ── */
+.card-outer{
+  width:100%;max-width:400px;
+  position:relative;
+  transition:height .48s cubic-bezier(.77,0,.18,1);
+  overflow:hidden;
+}
+
+/* ── Both cards sit inside the outer wrapper ── */
+.auth-card{
+  background:#fff;
+  border-radius:18px;
+  box-shadow:0 8px 40px rgba(26,111,196,.13);
+  border:1px solid #e2e8f0;
+  padding:2rem 2rem 1.75rem;
+  width:100%;
+  position:absolute;
+  top:0;left:0;
+  transition:transform .48s cubic-bezier(.77,0,.18,1), opacity .38s ease;
+  will-change:transform,opacity;
+}
+
+/* Login — default visible */
+#login-card{
+  transform:translateX(0);
+  opacity:1;
+  pointer-events:all;
+}
+/* Register — hidden right */
+#reg-card{
+  transform:translateX(110%);
+  opacity:0;
+  pointer-events:none;
+}
+/* Switched state */
+.switched #login-card{
+  transform:translateX(-110%);
+  opacity:0;
+  pointer-events:none;
+}
+.switched #reg-card{
+  transform:translateX(0);
+  opacity:1;
+  pointer-events:all;
+}
+
+/* ── Form elements ── */
+.form-label{font-size:.82rem;font-weight:600;color:#1e293b;margin-bottom:.3rem;display:block}
+.input-group-text{
+  background:#e8f1fb;border:1.5px solid #e2e8f0;border-right:none;
+  color:#1a6fc4;font-size:.88rem;
+  border-radius:10px 0 0 10px!important;
+  padding:.5rem .7rem;
+}
+.form-control{
+  border:1.5px solid #e2e8f0;border-left:none;
+  border-radius:0 10px 10px 0!important;
+  font-size:.88rem;padding:.52rem .85rem;
+  transition:border-color .2s,box-shadow .2s;
+  background:#fff;
+}
+.form-control:focus{
+  border-color:#1a6fc4;
+  box-shadow:0 0 0 3px rgba(26,111,196,.10);
+  outline:none;
+}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.field{margin-bottom:.8rem}
+.btn-auth{
+  background:linear-gradient(135deg,#1a6fc4,#0d9488);border:none;
+  color:#fff;border-radius:999px;padding:.65rem;font-size:.9rem;font-weight:600;
+  width:100%;margin-top:.4rem;cursor:pointer;
+  transition:opacity .2s,transform .15s;letter-spacing:.01em;
+}
+.btn-auth:hover{opacity:.92;transform:translateY(-1px)}
+.btn-auth:active{transform:translateY(0)}
+.card-title{font-size:1.2rem;font-weight:700;color:#1e293b;margin-bottom:.2rem}
+.card-sub{font-size:.8rem;color:#64748b;margin-bottom:1.2rem}
+.switch-link{text-align:center;margin-top:1.1rem;font-size:.82rem;color:#64748b}
+.switch-link a{color:#1a6fc4;font-weight:600;text-decoration:none;cursor:pointer}
+.switch-link a:hover{text-decoration:underline}
+.alert-msg{font-size:.8rem;padding:.45rem .8rem;border-radius:8px;margin-bottom:.9rem;border:none}
+.divider{border:none;border-top:1px solid #e2e8f0;margin:1.1rem 0 0}
+
+@media(max-width:768px){
+  .left-panel{display:none}
+  .right-panel{background:#fff}
+}
+</style>
+</head>
+<body>
+
+<!-- Left panel -->
+<div class="left-panel">
+  <div>
+    <div class="left-brand">
+      <div class="left-logo">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
+          <path d="M12 2C9.5 2 7 4 7 7.5C7 10 8 12 8 14.5C8 17 6.5 19 5 20.5C6.5 21.5 8 22 9.5 22C11.5 22 13 20.5 13 18.5C13 16 12 14 12 11.5C12 9 13.5 7 15 5.5C14 3.5 13 2 12 2Z" fill="white" opacity="0.95"/>
+          <path d="M15 4C16.5 5.5 17 8 17 10C17 13 15.5 15 15.5 17.5C15.5 19.5 16.5 21 18 21.5C19 20 19.5 18 19.5 16C19.5 13 18 11 18 8.5C18 6.5 17 4.5 15.5 3C15.3 3.3 15.1 3.6 15 4Z" fill="white" opacity="0.7"/>
+        </svg>
+      </div>
+      <span class="left-brand-name">CKD Risk Assessment</span>
+    </div>
+    <h1 class="left-title">AI-Powered Kidney Disease Screening</h1>
+    <p class="left-sub">Early detection saves lives. Our system uses machine learning to assess CKD risk with explainable AI.</p>
+  </div>
+  <div class="stats">
+    <div class="stat-box"><div class="stat-num">850M+</div><div class="stat-label">People affected globally</div></div>
+    <div class="stat-box"><div class="stat-num">90%</div><div class="stat-label">Unaware of condition</div></div>
+    <div class="stat-box"><div class="stat-num">AI</div><div class="stat-label">Explainable predictions</div></div>
+  </div>
+</div>
+
+<!-- Right panel -->
+<div class="right-panel">
+  <div class="card-outer" id="cardOuter">
+
+    <!-- LOGIN CARD -->
+    <div class="auth-card" id="login-card">
+      <div class="card-title">Welcome back</div>
+      <div class="card-sub">Sign in to your doctor account</div>
+
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% for cat, msg in messages %}
+        <div class="alert-msg" style="background:{% if cat=='danger' %}#fee2e2;color:#b91c1c{% else %}#dcfce7;color:#15803d{% endif %}">
+          {{ msg }}
+        </div>
+        {% endfor %}
+      {% endwith %}
+
+      <form method="POST" action="/login">
+        <div class="field">
+          <label class="form-label">Username</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input type="text" name="username" class="form-control"
+              placeholder="your username" required autocomplete="username"/>
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label">Password</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-lock"></i></span>
+            <input type="password" name="password" class="form-control"
+              placeholder="••••••••" required autocomplete="current-password"/>
+          </div>
+        </div>
+        <button type="submit" class="btn-auth">
+          <i class="bi bi-box-arrow-in-right me-2"></i>Sign In
+        </button>
+      </form>
+      <hr class="divider"/>
+      <div class="switch-link">
+        New doctor? <a onclick="switchTo('reg')">Create an account</a>
+      </div>
+    </div>
+
+    <!-- REGISTER CARD -->
+    <div class="auth-card" id="reg-card">
+      <div class="card-title">Create account</div>
+      <div class="card-sub">Register as a doctor to get started</div>
+
+      <form method="POST" action="/doctor/register">
+        <div class="field">
+          <label class="form-label">Full Name <span style="color:#dc2626">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-person"></i></span>
+            <input type="text" name="name" class="form-control"
+              placeholder="Dr. Rahul Menon" required/>
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label">Hospital / Clinic</label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-building"></i></span>
+            <input type="text" name="hospital" class="form-control"
+              placeholder="City Hospital"/>
+          </div>
+        </div>
+        <div class="field">
+          <label class="form-label">Email Address <span style="color:#dc2626">*</span></label>
+          <div class="input-group">
+            <span class="input-group-text"><i class="bi bi-envelope"></i></span>
+            <input type="email" name="email" class="form-control"
+              placeholder="doctor@hospital.com" required/>
+          </div>
+        </div>
+        <div class="form-row field">
+          <div>
+            <label class="form-label">Username <span style="color:#dc2626">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-at"></i></span>
+              <input type="text" name="username" class="form-control"
+                placeholder="drrahul" required/>
+            </div>
+          </div>
+          <div>
+            <label class="form-label">Password <span style="color:#dc2626">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-lock"></i></span>
+              <input type="password" name="password" class="form-control"
+                placeholder="Min. 6 chars" minlength="6" required/>
+            </div>
+          </div>
+        </div>
+        <!-- hidden specialization so backend doesn't break -->
+        <input type="hidden" name="specialization" value=""/>
+        <button type="submit" class="btn-auth">
+          <i class="bi bi-person-check me-2"></i>Create Account
+        </button>
+      </form>
+      <hr class="divider"/>
+      <div class="switch-link">
+        Already have an account? <a onclick="switchTo('login')">Sign in</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const outer     = document.getElementById("cardOuter");
+const loginCard = document.getElementById("login-card");
+const regCard   = document.getElementById("reg-card");
+let current     = "login";
+
+function setHeight(card){
+  // Temporarily make card position relative so we can measure its real height
+  card.style.position = "relative";
+  const h = card.offsetHeight;
+  card.style.position = "absolute";
+  outer.style.height  = h + "px";
+}
+
+function switchTo(target){
+  if(target === current) return;
+
+  if(target === "reg"){
+    // Measure register card height before animating
+    regCard.style.visibility  = "hidden";
+    regCard.style.position    = "relative";
+    const regH = regCard.offsetHeight;
+    regCard.style.position    = "absolute";
+    regCard.style.visibility  = "";
+
+    outer.classList.add("switched");
+    outer.style.height = regH + "px";
+    current = "reg";
+  } else {
+    // Measure login card height
+    loginCard.style.visibility = "hidden";
+    loginCard.style.position   = "relative";
+    const loginH = loginCard.offsetHeight;
+    loginCard.style.position   = "absolute";
+    loginCard.style.visibility = "";
+
+    outer.classList.remove("switched");
+    outer.style.height = loginH + "px";
+    current = "login";
+  }
+}
+
+// Init — set outer height to login card's natural height
+window.addEventListener("load", () => {
+  loginCard.style.position = "relative";
+  const h = loginCard.offsetHeight;
+  loginCard.style.position = "absolute";
+  outer.style.height = h + "px";
+  loginCard.style.position = "";   // let CSS handle it
+
+  {% if show_register %}
+  switchTo("reg");
+  {% endif %}
+});
+</script>
+</body>
+</html>
