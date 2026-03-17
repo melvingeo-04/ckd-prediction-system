@@ -20,32 +20,49 @@ if os.path.exists(MODEL_PATH):
     with open(MODEL_PATH, "rb") as f:
         model = pickle.load(f)
 
-# 10 features matching trained XGBoost model
-FEATURES = ["age","bp","sc","bu","hemo","bgr","al","sg","htn","dm"]
-FEATURE_LABELS = {
-    "age":  "Age (years)",
-    "bp":   "Blood Pressure (mm/Hg)",
-    "sc":   "Serum Creatinine (mgs/dl)",
-    "bu":   "Blood Urea (mgs/dl)",
-    "hemo": "Hemoglobin (gms)",
-    "bgr":  "Blood Glucose Random (mgs/dl)",
-    "al":   "Albumin",
-    "sg":   "Specific Gravity",
-    "htn":  "Hypertension",
-    "dm":   "Diabetes Mellitus",
-}
-ALL_FEATURES = ["age","bp","sc","bu","hemo","bgr","al","sg","htn","dm"]
-DEFAULTS = {}
+# ── Feature config — updated for RandomForest (24 features) ──
+FEATURES = ["age","bp","sg","al","su","rbc","pc","pcc","ba",
+            "bgr","bu","sc","sod","pot","hemo","pcv","wc","rc",
+            "htn","dm","cad","appet","pe","ane"]
 
+FEATURE_LABELS = {
+    "age":   "Age (years)",
+    "bp":    "Blood Pressure (mm/Hg)",
+    "sg":    "Specific Gravity",
+    "al":    "Albumin",
+    "su":    "Sugar",
+    "rbc":   "Red Blood Cells",
+    "pc":    "Pus Cell",
+    "pcc":   "Pus Cell Clumps",
+    "ba":    "Bacteria",
+    "bgr":   "Blood Glucose Random (mgs/dl)",
+    "bu":    "Blood Urea (mgs/dl)",
+    "sc":    "Serum Creatinine (mgs/dl)",
+    "sod":   "Sodium (mEq/L)",
+    "pot":   "Potassium (mEq/L)",
+    "hemo":  "Hemoglobin (gms)",
+    "pcv":   "Packed Cell Volume",
+    "wc":    "White Blood Cell Count",
+    "rc":    "Red Blood Cell Count",
+    "htn":   "Hypertension",
+    "dm":    "Diabetes Mellitus",
+    "cad":   "Coronary Artery Disease",
+    "appet": "Appetite",
+    "pe":    "Pedal Edema",
+    "ane":   "Anemia",
+}
+
+ALL_FEATURES = FEATURES.copy()
+
+# Override from model if available
 if model is not None:
     try:
         imp = model.named_steps["imputer"]
         if hasattr(imp, "feature_names_in_"):
             ALL_FEATURES = list(imp.feature_names_in_)
-            DEFAULTS = {c: DEFAULTS.get(c, 0) for c in ALL_FEATURES}
-            print(f"[OK] Model features: {ALL_FEATURES}")
+            print(f"[OK] Model features ({len(ALL_FEATURES)}): {ALL_FEATURES}")
     except Exception as e:
-        print(f"[WARN] {e}")
+        print(f"[WARN] Could not read model features: {e}")
 
 init_db()
 
@@ -79,15 +96,23 @@ def current_doctor():
         return get_doctor_by_id(session["doctor_id"])
     return None
 
+# ── Helper: safely convert db row to plain dict ──────────────
+def row_to_dict(row):
+    """Convert sqlite3.Row or dict to a JSON-serialisable plain dict."""
+    if row is None:
+        return None
+    if isinstance(row, dict):
+        return row
+    return dict(row)
+
 # ── Helpers ──────────────────────────────────────────────────
 def build_full_row(inp):
-    # Build row with all 10 features in exact order model was trained on
     row = {}
     for k in ALL_FEATURES:
         try:
             row[k] = float(inp[k])
         except (KeyError, TypeError, ValueError):
-            row[k] = float('nan')  # let KNN imputer handle missing values
+            row[k] = float('nan')
     return pd.DataFrame([[row[f] for f in ALL_FEATURES]], columns=ALL_FEATURES)
 
 def shap_chart(shap_vals, feature_vals):
@@ -112,7 +137,7 @@ def shap_chart(shap_vals, feature_vals):
     return base64.b64encode(buf.getvalue()).decode()
 
 # ════════════════════════════════════════════════════════════
-# PUBLIC ROUTES  (no login needed)
+# PUBLIC ROUTES
 # ════════════════════════════════════════════════════════════
 
 @app.route("/")
@@ -126,83 +151,45 @@ def education(page):
         return redirect(url_for("home"))
     return render_template(f"edu_{page.replace('-','_')}.html", doctor=current_doctor(), public_page=True)
 
-# ── Public: register patient ─────────────────────────────────
 @app.route("/register", methods=["GET","POST"])
 def register():
     if request.method == "POST":
         data = request.form.to_dict()
-        doc = current_doctor()
+        doc  = current_doctor()
         data["doctor_id"] = doc["did"] if doc else None
-        pid = add_patient(data)
+        pid  = add_patient(data)
         return redirect(url_for("public_predict", pid=pid))
     return render_template("register.html", doctor=current_doctor(), public_page=True)
 
-# ── Public: JSON API for inline patient lookup (used by register page) ──
+# ── /api/lookup — JSON endpoint for inline PID search ────────
 @app.route("/api/lookup")
 def api_lookup():
     pid = request.args.get("pid", "").strip().upper()
     if not pid:
         return jsonify({"found": False})
+
     patient = get_patient(pid)
     if not patient:
         return jsonify({"found": False})
+
+    # Convert to plain dict so jsonify works regardless of db row type
+    patient_dict = row_to_dict(patient)
+
     reports = get_reports(pid)
-    safe_reports = [
-        {k: v for k, v in r.items() if k != "chart_b64"}
-        for r in reports
-    ]
-    return jsonify({"found": True, "patient": patient, "reports": safe_reports})
+    safe_reports = []
+    for r in reports:
+        rd = row_to_dict(r)
+        rd.pop("chart_b64", None)   # strip large base64 blob
+        # Ensure score is a plain Python type
+        if "score" in rd:
+            rd["score"] = float(rd["score"]) if rd["score"] is not None else None
+        safe_reports.append(rd)
 
-# ── Public: lookup patient by PID ────────────────────────────
-@app.route("/lookup")
-def public_lookup():
-    pid = request.args.get("pid", "").strip().upper()
-    patient = None
-    reports = []
-    if pid:
-        patient = get_patient(pid)          # no doctor_id filter — but only exact PID match
-        if patient:
-            reports = get_reports(pid)
-    return render_template("public_lookup.html",
-                           patient=patient, reports=reports,
-                           query=pid or None, doctor=current_doctor(), public_page=True)
-
-# ── Public: view a single report by report_id ─────────────────
-@app.route("/result/<int:report_id>")
-def public_result_by_id(report_id):
-    from database import get_conn
-    conn = get_conn()
-    row  = conn.execute("SELECT * FROM reports WHERE report_id=?", (report_id,)).fetchone()
-    conn.close()
-    if not row:
-        flash("Report not found.", "danger")
-        return redirect(url_for("public_lookup"))
-    r       = dict(row)
-    patient = get_patient(r["pid"])
-    inp     = json.loads(r["inputs"] or "{}")
-    score   = r["score"]
-    level   = r["level"]
-    if score < 30:   level_class = "low"
-    elif score < 60: level_class = "moderate"
-    else:            level_class = "high"
-    try:
-        shap_vals = json.loads(r["shap_values"] or "[]")
-        order     = list(np.argsort(np.abs(shap_vals))[::-1])
-        explanations = [
-            f"{FEATURE_LABELS[FEATURES[i]]} {'increased' if shap_vals[i]>0 else 'lowered'} the predicted risk."
-            for i in order[:5] if i < len(FEATURES)
-        ]
-    except Exception:
-        explanations = []
-        shap_vals = []
-    return render_template("result.html",
-        patient=patient, score=score, level=level, level_class=level_class,
-        chart_b64=r.get("chart_b64") or None,
-        explanations=explanations,
-        shap_vals=[round(float(v),4) for v in shap_vals] if shap_vals else [],
-        shap_labels=[FEATURE_LABELS[f] for f in FEATURES],
-        inputs=inp, feature_labels=FEATURE_LABELS, doctor=current_doctor(), public_page=True)
-
+    return jsonify({
+        "found":   True,
+        "patient": patient_dict,
+        "reports": safe_reports
+    })
 
 @app.route("/predict/<pid>", methods=["GET","POST"])
 def public_predict(pid):
@@ -230,9 +217,15 @@ def public_predict(pid):
             if isinstance(shap_all, list): sv = shap_all[1][0]
             elif shap_all.ndim == 3:       sv = shap_all[0, :, 1]
             else:                          sv = shap_all[0]
-            feat_idx  = [ALL_FEATURES.index(f) for f in FEATURES]
-            shap_vals = sv[feat_idx]
-            chart_b64 = shap_chart(shap_vals, df[FEATURES].values[0])
+            # Map ALL_FEATURES indices to FEATURES
+            shap_vals = []
+            for f in FEATURES:
+                if f in ALL_FEATURES:
+                    shap_vals.append(float(sv[ALL_FEATURES.index(f)]))
+                else:
+                    shap_vals.append(0.0)
+            shap_vals = np.array(shap_vals)
+            chart_b64 = shap_chart(shap_vals, df[FEATURES].values[0] if set(FEATURES).issubset(set(df.columns)) else [0]*len(FEATURES))
             order     = np.argsort(np.abs(shap_vals))[::-1]
             explanations = [
                 f"{FEATURE_LABELS[FEATURES[i]]} {'increased' if shap_vals[i]>0 else 'lowered'} the predicted risk."
@@ -241,20 +234,20 @@ def public_predict(pid):
         except Exception as e:
             chart_b64    = None
             explanations = [f"SHAP unavailable: {e}"]
-            shap_vals    = [0]*len(FEATURES)
+            shap_vals    = [0.0] * len(FEATURES)
 
         add_report({
             "pid":         pid,
             "inputs":      json.dumps({k: inp.get(k) for k in FEATURES}),
             "score":       score,
             "level":       level,
-            "shap_values": json.dumps([round(float(v),4) for v in shap_vals]),
+            "shap_values": json.dumps([round(float(v), 4) for v in shap_vals]),
             "chart_b64":   chart_b64 or ""
         })
         return render_template("result.html",
             patient=patient, score=score, level=level, level_class=level_class,
             chart_b64=chart_b64, explanations=explanations,
-            shap_vals=[round(float(v),4) for v in shap_vals],
+            shap_vals=[round(float(v), 4) for v in shap_vals],
             shap_labels=[FEATURE_LABELS[f] for f in FEATURES],
             inputs={k: inp.get(k) for k in FEATURES},
             feature_labels=FEATURE_LABELS, doctor=current_doctor(), public_page=True)
@@ -263,8 +256,44 @@ def public_predict(pid):
                            feature_labels=FEATURE_LABELS, features=FEATURES,
                            doctor=current_doctor(), public_page=True)
 
+# ── View single report ────────────────────────────────────────
+@app.route("/result/<int:report_id>")
+def public_result_by_id(report_id):
+    from database import get_conn
+    conn = get_conn()
+    row  = conn.execute("SELECT * FROM reports WHERE report_id=?", (report_id,)).fetchone()
+    conn.close()
+    if not row:
+        flash("Report not found.", "danger")
+        return redirect(url_for("register"))
+    r       = dict(row)
+    patient = get_patient(r["pid"])
+    inp     = json.loads(r["inputs"] or "{}")
+    score   = r["score"]
+    level   = r["level"]
+    if score < 30:   level_class = "low"
+    elif score < 60: level_class = "moderate"
+    else:            level_class = "high"
+    try:
+        shap_vals = json.loads(r["shap_values"] or "[]")
+        order     = list(np.argsort(np.abs(shap_vals))[::-1])
+        explanations = [
+            f"{FEATURE_LABELS.get(FEATURES[i], FEATURES[i])} {'increased' if shap_vals[i]>0 else 'lowered'} the predicted risk."
+            for i in order[:5] if i < len(FEATURES)
+        ]
+    except Exception:
+        explanations = []
+        shap_vals    = []
+    return render_template("result.html",
+        patient=patient, score=score, level=level, level_class=level_class,
+        chart_b64=r.get("chart_b64") or None,
+        explanations=explanations,
+        shap_vals=[round(float(v), 4) for v in shap_vals] if shap_vals else [],
+        shap_labels=[FEATURE_LABELS[f] for f in FEATURES],
+        inputs=inp, feature_labels=FEATURE_LABELS, doctor=current_doctor(), public_page=True)
+
 # ════════════════════════════════════════════════════════════
-# DOCTOR / ADMIN ROUTES  (login required)
+# DOCTOR ROUTES
 # ════════════════════════════════════════════════════════════
 
 @app.route("/doctor/login", methods=["GET","POST"])
@@ -313,7 +342,7 @@ def dashboard():
 @doctor_required
 def patients():
     doctor = current_doctor()
-    all_p = get_all_patients(doctor["did"])
+    all_p  = get_all_patients(doctor["did"])
     return render_template("patients.html", patients=all_p, doctor=doctor)
 
 @app.route("/patient/<pid>")
@@ -341,7 +370,6 @@ def delete_patient_route(pid):
     doctor = current_doctor()
     delete_patient(pid, doctor["did"])
     return redirect(url_for("patients"))
-
 
 @app.route("/model-info")
 def model_info():

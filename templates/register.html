@@ -11,14 +11,11 @@
 
 <div class="container portal-wrap" id="portalWrap">
   <div class="row justify-content-center w-100">
-    <div class="col-lg-5 col-md-7 panel-container" style="overflow:hidden">
-
-      <!-- SLIDING TRACK -->
-      <div class="panels-track">
+    <div class="col-lg-5 col-md-7" style="position:relative">
 
       <!-- PANEL 1: REGISTER -->
-      <div id="registerPanel" class="slide-panel" style="opacity:1">
-        <div class="portal-card fade-up">
+      <div id="registerPanel">
+        <div class="portal-card">
           <div class="portal-card-header">
             <div class="d-flex align-items-center gap-2 mb-1">
               <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center">
@@ -31,7 +28,6 @@
             </div>
           </div>
           <div class="portal-card-body">
-
             <form method="POST" class="mb-2">
               <div class="mb-3">
                 <label class="form-label">Full Name <span class="text-danger">*</span></label>
@@ -62,20 +58,18 @@
                 <i class="bi bi-person-check me-2"></i>Register & Continue to Prediction
               </button>
             </form>
-
             <button class="already-btn" onclick="showLookup()">
               <i class="bi bi-search"></i>
               Already registered? Search by Patient ID
               <i class="bi bi-arrow-right ms-auto"></i>
             </button>
-
           </div>
         </div>
       </div>
 
       <!-- PANEL 2: LOOKUP -->
-      <div id="lookupPanel" class="slide-panel" style="opacity:0;pointer-events:none">
-        <div class="portal-card fade-up">
+      <div id="lookupPanel" style="display:none">
+        <div class="portal-card">
           <div class="portal-card-header">
             <button class="back-slide-btn mb-2" onclick="showRegister()">
               <i class="bi bi-arrow-left"></i> Back to Registration
@@ -102,14 +96,10 @@
               </div>
               <div class="text-muted" style="font-size:.72rem;margin-top:.3rem">Your Patient ID was shown after registration</div>
             </div>
-
             <div id="lookupResult"></div>
-
           </div>
         </div>
       </div>
-
-      </div><!-- end panels-track -->
 
     </div>
   </div>
@@ -118,87 +108,84 @@
 {% endblock %}
 {% block scripts %}
 <script>
-function syncHeight(){
-  const pc = document.querySelector('.panel-container');
-  const isLookup = document.getElementById('portalWrap').classList.contains('show-lookup');
-  const active = isLookup
-    ? document.getElementById('lookupPanel')
-    : document.getElementById('registerPanel');
-  pc.style.height = active.scrollHeight + 'px';
-}
 function showLookup(){
-  document.getElementById('portalWrap').classList.add('show-lookup');
-  setTimeout(()=>{ document.getElementById('pidInput').focus(); syncHeight(); }, 460);
+  document.getElementById('registerPanel').style.display = 'none';
+  document.getElementById('lookupPanel').style.display   = 'block';
+  document.getElementById('pidInput').focus();
 }
+
 function showRegister(){
-  document.getElementById('portalWrap').classList.remove('show-lookup');
-  document.getElementById('lookupResult').innerHTML='';
-  document.getElementById('pidInput').value='';
-  setTimeout(syncHeight, 460);
+  document.getElementById('lookupPanel').style.display   = 'none';
+  document.getElementById('registerPanel').style.display = 'block';
+  document.getElementById('lookupResult').innerHTML = '';
+  document.getElementById('pidInput').value = '';
 }
 
 async function lookupPID(){
   const pid = document.getElementById('pidInput').value.trim().toUpperCase();
-  if(!pid){return;}
+  if(!pid) return;
   const btn = document.getElementById('lookupBtn');
-  btn.innerHTML='<span class="spinner-border spinner-border-sm"></span>';
-  btn.disabled=true;
+  btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
+  btn.disabled  = true;
 
   try{
-    const res = await fetch(`/api/lookup?pid=${pid}`);
+    const res  = await fetch(`/api/lookup?pid=${encodeURIComponent(pid)}`);
     const data = await res.json();
-    const el = document.getElementById('lookupResult');
+    const el   = document.getElementById('lookupResult');
 
     if(data.found){
       const p = data.patient;
       const reports = data.reports || [];
       let reportHTML = '';
-      if(reports.length>0){
-        const last = reports[0];
+      if(reports.length > 0){
+        const last   = reports[0];
         const isHigh = last.result && last.result.includes('CKD') && !last.result.includes('Not');
         reportHTML = `<div class="mt-2 p-2 rounded-2" style="background:${isHigh?'#fef2f2':'#f0fdf4'};border:1px solid ${isHigh?'#fecaca':'#bbf7d0'}">
           <div style="font-size:.72rem;font-weight:600;color:${isHigh?'#b91c1c':'#15803d'}">
-            <i class="bi bi-${isHigh?'x':'check'}-circle-fill me-1"></i>Last Result: ${last.result || '—'} · ${last.score||''}${last.score?'%':''}
+            <i class="bi bi-${isHigh?'x':'check'}-circle-fill me-1"></i>
+            Last Result: ${last.result||'—'} · ${last.score != null ? last.score+'%' : ''}
           </div>
         </div>`;
       }
-      el.innerHTML=`<div class="pid-result">
-        <div class="d-flex align-items-center justify-content-between mb-2">
-          <span class="pid-badge">${p.pid}</span>
-          <span class="text-muted small">${p.reg_date||''}</span>
-        </div>
-        <div class="name">${p.name}</div>
-        <div class="text-muted small">${p.age} yrs · ${p.gender||'—'}</div>
-        ${reportHTML}
-        <div class="d-flex gap-2 mt-3">
-          <a href="/patient/${p.pid}" class="btn btn-outline-primary rounded-pill btn-sm flex-fill">
-            <i class="bi bi-eye me-1"></i>View Profile
-          </a>
-          <a href="/predict/${p.pid}" class="btn btn-primary rounded-pill btn-sm flex-fill">
-            <i class="bi bi-cpu me-1"></i>Run Prediction
-          </a>
-        </div>
-      </div>`;
+      el.innerHTML = `
+        <div class="pid-result">
+          <div class="d-flex align-items-center justify-content-between mb-2">
+            <span class="pid-badge">${p.pid}</span>
+            <span class="text-muted small">${p.reg_date||''}</span>
+          </div>
+          <div class="fw-600">${p.name}</div>
+          <div class="text-muted small">${p.age} yrs · ${p.gender||'—'}</div>
+          ${reportHTML}
+          <div class="d-flex gap-2 mt-3">
+            <a href="/patient/${p.pid}" class="btn btn-outline-primary rounded-pill btn-sm flex-fill">
+              <i class="bi bi-eye me-1"></i>View Profile
+            </a>
+            <a href="/predict/${p.pid}" class="btn btn-primary rounded-pill btn-sm flex-fill">
+              <i class="bi bi-cpu me-1"></i>Run Prediction
+            </a>
+          </div>
+        </div>`;
     } else {
-      el.innerHTML=`<div class="text-center p-3" style="background:#fef2f2;border-radius:12px;border:1px solid #fecaca">
-        <i class="bi bi-person-x text-danger fs-4 d-block mb-1"></i>
-        <div class="fw-600 small text-danger">Patient ID not found</div>
-        <div class="text-muted" style="font-size:.75rem">Check the ID or register as a new patient</div>
-        <button class="btn btn-link btn-sm text-primary mt-1 p-0" onclick="showRegister()">← Go to Registration</button>
-      </div>`;
+      el.innerHTML = `
+        <div class="text-center p-3" style="background:#fef2f2;border-radius:12px;border:1px solid #fecaca">
+          <i class="bi bi-person-x text-danger fs-4 d-block mb-1"></i>
+          <div class="fw-600 small text-danger">Patient ID not found</div>
+          <div class="text-muted" style="font-size:.75rem">Check the ID or register as a new patient</div>
+          <button class="btn btn-link btn-sm text-primary mt-1 p-0" onclick="showRegister()">← Go to Registration</button>
+        </div>`;
     }
   } catch(e){
-    document.getElementById('lookupResult').innerHTML='<div class="text-danger small">Error connecting. Please try again.</div>';
+    document.getElementById('lookupResult').innerHTML =
+      `<div class="alert alert-danger small p-2">Error: ${e.message}</div>`;
+    console.error('Lookup error:', e);
   }
 
-  btn.innerHTML='<i class="bi bi-search"></i>';
-  btn.disabled=false;
-  setTimeout(syncHeight, 50);
+  btn.innerHTML = '<i class="bi bi-search"></i>';
+  btn.disabled  = false;
 }
 
-document.getElementById('pidInput').addEventListener('keydown',e=>{
-  if(e.key==='Enter') lookupPID();
+document.getElementById('pidInput').addEventListener('keydown', e=>{
+  if(e.key === 'Enter') lookupPID();
 });
-window.addEventListener('load', syncHeight);
 </script>
 {% endblock %}
