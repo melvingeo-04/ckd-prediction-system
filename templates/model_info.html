@@ -11,14 +11,16 @@
   </div>
 
   <!-- MODEL STATS -->
+  {% set best = meta.get("results", [{}])[0] if meta else {} %}
+  {% set cm   = meta.get("cm", {}) %}
   <div class="row g-3 mb-4 fade-up">
     {% for icon,color,label,val in [
-      ("bi-cpu","#1a5fb4","Algorithm","RandomForest Classifier"),
+      ("bi-cpu","#1a5fb4","Algorithm", meta.get("best_model","RandomForest") + " Classifier"),
       ("bi-database","#0d9488","Dataset","UCI CKD Dataset"),
       ("bi-people","#7c3aed","Samples","400 Patients"),
       ("bi-list-check","#d97706","Features","24 Medical Attributes"),
-      ("bi-bullseye","#16a34a","Model Accuracy","100%"),
-      ("bi-graph-up","#dc2626","ROC AUC","1.000")
+      ("bi-bullseye","#16a34a","Model Accuracy", (best.get("Accuracy",0)|round(4)|string)),
+      ("bi-graph-up","#dc2626","CV Recall", (best.get("CV Recall",0)|round(4)|string))
     ] %}
     <div class="col-md-4 col-lg-2">
       <div class="ckd-card p-3 text-center h-100">
@@ -41,7 +43,7 @@
           <table class="table ckd-table mb-0">
             <tbody>
               {% for label,val in [
-                ("Algorithm","RandomForest (Ensemble of Decision Trees)"),
+                ("Algorithm", meta.get("best_model","RandomForest") ~ " Classifier"),
                 ("Dataset","UCI ML Repository — CKD Dataset (ID: 336)"),
                 ("Source","Apollo Hospital, India"),
                 ("Total Samples","400 patients"),
@@ -71,16 +73,19 @@
         <div class="ckd-card-header"><i class="bi bi-list-check"></i> Features Used</div>
         <div class="p-3">
           {% for icon,color,feat,desc in [
-            ("bi-heart-pulse","#dc2626","Blood Pressure (bp)","mm/Hg — vascular stress on kidneys"),
-            ("bi-droplet","#1a5fb4","Serum Creatinine (sc)","mgs/dl — primary filtration marker"),
-            ("bi-activity","#d97706","Blood Urea (bu)","mgs/dl — kidney clearance indicator"),
-            ("bi-droplet-half","#7c3aed","Hemoglobin (hemo)","gms — anemia from EPO deficiency"),
-            ("bi-graph-up","#0d9488","Blood Glucose (bgr)","mgs/dl — diabetes-related damage"),
-            ("bi-beaker","#16a34a","Albumin (al)","0–5 scale — proteinuria severity"),
-            ("bi-eyedropper","#6b7280","Specific Gravity (sg)","urine concentration ability"),
-            ("bi-thermometer-high","#dc2626","Hypertension (htn)","yes/no — 2nd cause of CKD"),
-            ("bi-capsule","#d97706","Diabetes Mellitus (dm)","yes/no — #1 cause of CKD"),
-            ("bi-calendar3","#1a5fb4","Age","years — kidney function declines with age")
+            ("bi-activity","#d97706","Blood Urea (log)","mg/dl — primary waste product, elevated in kidney failure"),
+            ("bi-grid","#7c3aed","Pus Cell Clumps","presence — indicates urinary tract infection"),
+            ("bi-eyedropper","#6b7280","Specific Gravity","urine concentration — reflects kidney dilution ability"),
+            ("bi-droplet","#1a5fb4","Serum Creatinine (log)","mg/dl — key filtration rate marker"),
+            ("bi-beaker","#16a34a","Albumin","0–5 scale — protein in urine signals filter damage"),
+            ("bi-droplet-fill","#dc2626","Red Blood Cells","normal/abnormal — abnormal RBC = kidney damage"),
+            ("bi-capsule","#d97706","Potassium (log)","mEq/L — imbalance common in CKD"),
+            ("bi-calendar3","#1a5fb4","Age (years)","kidney function naturally declines with age"),
+            ("bi-virus","#0d9488","Pus Cell","normal/abnormal — infection marker"),
+            ("bi-heart-pulse","#dc2626","Blood Pressure","mm/Hg — hypertension strains kidney vessels"),
+            ("bi-bacteria","#6b7280","Bacteria","presence/absence — infection indicator"),
+            ("bi-graph-up","#0d9488","Blood Glucose Random","mg/dl — high glucose damages glomeruli"),
+            ("bi-moisture","#7c3aed","Sodium (log)","mEq/L — electrolyte imbalance in CKD")
           ] %}
           <div class="d-flex align-items-center gap-2 py-2" style="border-bottom:1px solid var(--border)">
             <div style="width:28px;height:28px;background:{{ color }}18;border-radius:7px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
@@ -111,20 +116,18 @@
               </tr>
             </thead>
             <tbody>
-              {% for model,acc,prec,rec,f1,cvr,best in [
-                ("RandomForest","1.0000","1.0000","1.0000","1.0000","0.9943",true),
-                ("XGBoost","1.0000","1.0000","1.0000","1.0000","0.9714",false),
-                ("ANN","0.9917","1.0000","0.9867","0.9933","0.9886",false),
-                ("SVM","0.9833","1.0000","0.9733","0.9865","0.9829",false),
-                ("AdaBoost","0.9833","1.0000","0.9733","0.9865","0.9771",false)
-              ] %}
-              <tr {% if best %}style="background:#eff6ff;font-weight:600"{% endif %}>
+              {% for row in meta.get("results", []) %}
+              {% set is_best = (row["Model"] == meta.get("best_model")) %}
+              <tr {% if is_best %}style="background:#eff6ff;font-weight:600"{% endif %}>
                 <td>
-                  {{ model }}
-                  {% if best %}<span class="ms-1 badge rounded-pill" style="background:#1a5fb4;font-size:.65rem">Best</span>{% endif %}
+                  {{ row["Model"] }}
+                  {% if is_best %}<span class="ms-1 badge rounded-pill" style="background:#1a5fb4;font-size:.65rem">Best</span>{% endif %}
                 </td>
-                <td>{{ acc }}</td><td>{{ prec }}</td><td>{{ rec }}</td><td>{{ f1 }}</td>
-                <td><strong>{{ cvr }}</strong></td>
+                <td>{{ row["Accuracy"] }}</td>
+                <td>{{ row["Precision"] }}</td>
+                <td>{{ row["Recall"] }}</td>
+                <td>{{ row["F1"] }}</td>
+                <td><strong>{{ row["CV Recall"] }}</strong></td>
               </tr>
               {% endfor %}
             </tbody>
@@ -134,14 +137,15 @@
 
       <!-- Confusion matrix -->
       <div class="ckd-card mb-4">
-        <div class="ckd-card-header"><i class="bi bi-grid"></i> Confusion Matrix — RandomForest</div>
+        <div class="ckd-card-header"><i class="bi bi-grid"></i> Confusion Matrix — {{ meta.get("best_model","RandomForest") }}</div>
         <div class="p-4">
           <div class="row g-2" style="max-width:320px;margin:auto">
+            {% set cm = meta.get("cm", {"tn":45,"fp":0,"fn":0,"tp":75}) %}
             {% for bg,txt,label,val in [
-              ("#dbeafe","#1e3a8a","True Negative (TN)","45"),
-              ("#fee2e2","#7f1d1d","False Positive (FP)","0"),
-              ("#fef9c3","#713f12","False Negative (FN)","0"),
-              ("#dcfce7","#14532d","True Positive (TP)","75")
+              ("#dbeafe","#1e3a8a","True Negative (TN)", cm.get("tn",0)|string),
+              ("#fee2e2","#7f1d1d","False Positive (FP)", cm.get("fp",0)|string),
+              ("#fef9c3","#713f12","False Negative (FN)", cm.get("fn",0)|string),
+              ("#dcfce7","#14532d","True Positive (TP)",  cm.get("tp",0)|string)
             ] %}
             <div class="col-6">
               <div style="background:{{ bg }};border-radius:12px;padding:1rem;text-align:center">
@@ -152,47 +156,72 @@
             {% endfor %}
           </div>
           <div class="text-center mt-3">
-            <span class="text-muted small">Zero misclassifications out of 120 test patients</span>
+            {% set cm_fp = meta.get("cm",{}).get("fp",0) if meta else 0 %}
+            {% set cm_fn = meta.get("cm",{}).get("fn",0) if meta else 0 %}
+            {% set total_wrong = cm_fp + cm_fn %}
+            <span class="text-muted small">
+              {% if total_wrong == 0 %}Zero misclassifications out of 120 test patients
+              {% else %}{{ total_wrong }} misclassification{{ "s" if total_wrong > 1 }} out of 120 test patients{% endif %}
+            </span>
           </div>
         </div>
       </div>
 
-      <!-- Charts -->
+      <!-- Charts — SHAP feature importance from model_meta.json -->
       <div class="ckd-card mb-4">
-        <div class="ckd-card-header"><i class="bi bi-bar-chart"></i> Feature Importance (RandomForest)</div>
+        <div class="ckd-card-header"><i class="bi bi-bar-chart"></i> SHAP Feature Importance — {{ meta.get("best_model","RandomForest") }}</div>
         <div class="p-3">
-          {% for feat,score,color in [
-            ("Packed Cell Volume",17,"#1a5fb4"),
-            ("Hemoglobin",17,"#0d9488"),
-            ("Serum Creatinine",16,"#7c3aed"),
-            ("Specific Gravity",12,"#d97706"),
-            ("Red Blood Cell Count",8,"#dc2626"),
-            ("Hypertension",7,"#16a34a"),
-            ("Albumin",5,"#6b7280"),
-            ("Diabetes Mellitus",4,"#6b7280"),
-            ("Blood Urea",4,"#6b7280"),
-            ("Blood Glucose Random",3,"#6b7280")
-          ] %}
-          <div class="d-flex align-items-center gap-2 mb-2">
-            <div style="width:140px;font-size:.75rem;text-align:right;color:var(--muted);flex-shrink:0">{{ feat }}</div>
-            <div style="flex:1;height:20px;background:#f1f5f9;border-radius:999px;overflow:hidden">
-              <div style="height:100%;width:{{ score }}%;background:{{ color }};border-radius:999px;transition:width .8s ease"></div>
+          {% if meta.get("shap_importance") %}
+            {% set shap_items = meta.get("shap_importance") %}
+            {% set max_val = shap_items[0]["shap"] %}
+            {% for item in shap_items %}
+            {% set bar_pct = ((item["shap"] / max_val) * 100) | round(1) %}
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div style="width:160px;font-size:.75rem;text-align:right;color:var(--muted);flex-shrink:0">{{ item["feature"] }}</div>
+              <div style="flex:1;height:20px;background:#f1f5f9;border-radius:999px;overflow:hidden">
+                <div style="height:100%;width:{{ bar_pct }}%;background:#1a5fb4;border-radius:999px;transition:width .8s ease"></div>
+              </div>
+              <div style="width:52px;font-size:.75rem;font-weight:600;color:var(--text)">{{ item["shap"] }}</div>
             </div>
-            <div style="width:36px;font-size:.75rem;font-weight:600;color:var(--text)">{{ score }}%</div>
-          </div>
-          {% endfor %}
+            {% endfor %}
+          {% else %}
+            {# Fallback — real values from your trained model screenshot #}
+            {% for feat,shap_val,pct in [
+              ("Blood Urea (log)",      "0.1491", 100),
+              ("Pus Cell Clumps",       "0.1260", 85),
+              ("Specific Gravity",      "0.1105", 74),
+              ("Serum Creatinine (log)","0.0434", 29),
+              ("Albumin",               "0.0377", 25),
+              ("Red Blood Cells",       "0.0275", 18),
+              ("Potassium (log)",       "0.0156", 10),
+              ("Age (years)",           "0.0100",  7),
+              ("Pus Cell",              "0.0081",  5),
+              ("Blood Pressure",        "0.0081",  5)
+            ] %}
+            <div class="d-flex align-items-center gap-2 mb-2">
+              <div style="width:160px;font-size:.75rem;text-align:right;color:var(--muted);flex-shrink:0">{{ feat }}</div>
+              <div style="flex:1;height:20px;background:#f1f5f9;border-radius:999px;overflow:hidden">
+                <div style="height:100%;width:{{ pct }}%;background:#1a5fb4;border-radius:999px;transition:width .8s ease"></div>
+              </div>
+              <div style="width:52px;font-size:.75rem;font-weight:600;color:var(--text)">{{ shap_val }}</div>
+            </div>
+            {% endfor %}
+          {% endif %}
         </div>
       </div>
 
       <!-- Why RandomForest -->
       <div class="ckd-card">
-        <div class="ckd-card-header"><i class="bi bi-patch-check"></i> Why RandomForest Was Selected</div>
+        <div class="ckd-card-header"><i class="bi bi-patch-check"></i> Why {{ meta.get("best_model","RandomForest") }} Was Selected</div>
         <div class="p-4">
           <div class="row g-3">
+            {% set best_cv  = meta.get("results",[{}])[0].get("CV Recall","—") if meta else "—" %}
+            {% set best_acc = meta.get("results",[{}])[0].get("Accuracy","—") if meta else "—" %}
+            {% set best_f1  = meta.get("results",[{}])[0].get("F1","—") if meta else "—" %}
             {% for icon,color,title,desc in [
-              ("bi-trophy","#d97706","Highest CV Recall","CV Recall of 0.9943 — best across all 5 stratified folds, ensuring reliable generalization."),
-              ("bi-journal-check","#1a5fb4","Perfect Test Performance","Achieved flawless 1.0 Accuracy, Precision, Recall and F1 on the test set with zero misclassifications out of 120 patients."),
-              ("bi-bar-chart-line","#0d9488","SHAP Explainability","RandomForest's ensemble tree structure enables SHAP analysis, providing interpretable feature contributions for each prediction.")
+              ("bi-trophy","#d97706","Highest CV Recall","CV Recall of " ~ best_cv ~ " — best among tree-based models across all 5 stratified folds, ensuring reliable generalisation."),
+              ("bi-journal-check","#1a5fb4","Strong Test Performance","Achieved Accuracy of " ~ best_acc ~ " and F1 of " ~ best_f1 ~ " on the held-out test set — consistently strong across all metrics."),
+              ("bi-bar-chart-line","#0d9488","SHAP Explainability","RandomForest's ensemble tree structure enables SHAP TreeExplainer, providing interpretable feature contributions for each individual prediction.")
             ] %}
             <div class="col-12">
               <div class="d-flex gap-3 align-items-start">

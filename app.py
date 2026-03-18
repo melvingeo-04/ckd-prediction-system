@@ -13,12 +13,28 @@ from database import (init_db, add_doctor, get_doctor_by_username,
 app = Flask(__name__)
 app.secret_key = "ckd-risk-assessment-2024"
 
-# ── Load model ───────────────────────────────────────────────
-MODEL_PATH = "ckd_best_model.pkl"
-model = None
-if os.path.exists(MODEL_PATH):
-    with open(MODEL_PATH, "rb") as f:
+# ── Load model + encoder + metadata ─────────────────────────
+model        = None
+ord_enc      = None
+cat_cols     = []
+model_meta   = {}
+
+if os.path.exists("ckd_best_model.pkl"):
+    with open("ckd_best_model.pkl", "rb") as f:
         model = pickle.load(f)
+    print("[OK] Model loaded.")
+
+if os.path.exists("ckd_ord_enc.pkl"):
+    with open("ckd_ord_enc.pkl", "rb") as f:
+        enc_data  = pickle.load(f)
+    ord_enc   = enc_data["encoder"]
+    cat_cols  = enc_data["categorical_cols"]
+    print(f"[OK] Encoder loaded. Categorical cols: {cat_cols}")
+
+if os.path.exists("model_meta.json"):
+    with open("model_meta.json") as f:
+        model_meta = json.load(f)
+    print(f"[OK] Meta loaded. Best model: {model_meta.get('best_model')}")
 
 # ── 10 core input features — easy to collect clinically ──────
 FEATURES = ["age","bp","sc","bu","hemo","bgr","al","sg","htn","dm"]
@@ -48,16 +64,10 @@ DEFAULTS = {"su":0,"rbc":1,"pc":1,"pcc":0,"ba":0,
             "wbcc":7800,"rbcc":5.2,
             "cad":0,"appet":1,"pe":0,"ane":0}
 
-# Override from model if available
-if model is not None:
-    try:
-        imp = model.named_steps["imputer"]
-        if hasattr(imp, "feature_names_in_"):
-            ALL_FEATURES = list(imp.feature_names_in_)
-            DEFAULTS.update({c: DEFAULTS.get(c, 0) for c in ALL_FEATURES})
-            print(f"[OK] Model features ({len(ALL_FEATURES)}): {ALL_FEATURES}")
-    except Exception as e:
-        print(f"[WARN] Could not read model features: {e}")
+# Override ALL_FEATURES from saved metadata if available
+if model_meta.get("all_features"):
+    ALL_FEATURES = model_meta["all_features"]
+    print(f"[OK] All features ({len(ALL_FEATURES)}) loaded from meta.")
 
 init_db()
 
@@ -102,13 +112,23 @@ def row_to_dict(row):
 
 # ── Helpers ──────────────────────────────────────────────────
 def build_full_row(inp):
-    """Build a DataFrame row with all 24 model features.
-    Start from DEFAULTS (healthy baseline for 14 non-form features),
-    then overlay the 10 values the user actually entered.
+    """Build a DataFrame row with all 24 model features and
+    apply the same OrdinalEncoder used during training.
     """
     row = dict(DEFAULTS)
-    row.update({k: float(inp[k]) for k in FEATURES if k in inp})
-    return pd.DataFrame([[row[f] for f in ALL_FEATURES]], columns=ALL_FEATURES)
+    # Numeric inputs from the form
+    for k in FEATURES:
+        if k in inp and inp[k] not in (None, ""):
+            row[k] = float(inp[k])
+    df_row = pd.DataFrame([[row.get(f, 0) for f in ALL_FEATURES]],
+                          columns=ALL_FEATURES)
+    # Apply ordinal encoding to categorical columns if encoder available
+    if ord_enc is not None and cat_cols:
+        present = [c for c in cat_cols if c in df_row.columns]
+        if present:
+            df_row[present] = df_row[present].astype(str)
+            df_row[present] = ord_enc.transform(df_row[present])
+    return df_row
 
 def shap_chart(shap_vals, feature_vals):
     labels = [FEATURE_LABELS.get(f, f) for f in FEATURES]
@@ -325,7 +345,20 @@ def doctor_logout():
 def dashboard():
     doctor = current_doctor()
     all_p  = get_all_patients(doctor["did"])
-    return render_template("dashboard.html", doctor=doctor, patients=all_p)
+    # Count total reports (predictions run) for this doctor's patients
+    from database import get_conn
+    conn = get_conn()
+    pids = [p["pid"] for p in all_p]
+    total_predictions = 0
+    if pids:
+        placeholders = ",".join("?" * len(pids))
+        total_predictions = conn.execute(
+            f"SELECT COUNT(*) FROM reports WHERE pid IN ({placeholders})", pids
+        ).fetchone()[0]
+    conn.close()
+    return render_template("dashboard.html", doctor=doctor,
+                           patients=all_p, meta=model_meta,
+                           total_predictions=total_predictions)
 
 @app.route("/patients")
 @doctor_required
@@ -362,7 +395,10 @@ def delete_patient_route(pid):
 
 @app.route("/model-info")
 def model_info():
-    return render_template("model_info.html", doctor=current_doctor(), public_page=True)
+    return render_template("model_info.html",
+                           doctor=current_doctor(),
+                           public_page=True,
+                           meta=model_meta)
 
 if __name__ == "__main__":
     app.run(debug=True, port=5000)

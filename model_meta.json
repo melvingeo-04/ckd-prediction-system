@@ -1,0 +1,143 @@
+{
+  "best_model": "XGBoost",
+  "all_features": [
+    "age",
+    "bp",
+    "sg",
+    "al",
+    "su",
+    "rbc",
+    "pc",
+    "pcc",
+    "ba",
+    "bgr",
+    "bu",
+    "sc",
+    "sod",
+    "pot",
+    "hemo",
+    "pcv",
+    "wbcc",
+    "rbcc",
+    "htn",
+    "dm",
+    "cad",
+    "appet",
+    "pe",
+    "ane"
+  ],
+  "categorical_cols": [
+    "rbc",
+    "pc",
+    "pcc",
+    "ba",
+    "htn",
+    "dm",
+    "cad",
+    "appet",
+    "pe",
+    "ane"
+  ],
+  "results": [
+    {
+      "Model": "XGBoost",
+      "Accuracy": 0.9833,
+      "Precision": 0.9867,
+      "Recall": 0.9867,
+      "F1": 0.9867,
+      "CV Recall": 0.9593
+    },
+    {
+      "Model": "RandomForest",
+      "Accuracy": 0.9833,
+      "Precision": 0.974,
+      "Recall": 1.0,
+      "F1": 0.9868,
+      "CV Recall": 0.9538
+    },
+    {
+      "Model": "LogisticReg",
+      "Accuracy": 0.975,
+      "Precision": 1.0,
+      "Recall": 0.96,
+      "F1": 0.9796,
+      "CV Recall": 0.942
+    },
+    {
+      "Model": "AdaBoost",
+      "Accuracy": 0.9667,
+      "Precision": 1.0,
+      "Recall": 0.9467,
+      "F1": 0.9726,
+      "CV Recall": 0.9308
+    },
+    {
+      "Model": "ANN",
+      "Accuracy": 0.9083,
+      "Precision": 0.9571,
+      "Recall": 0.8933,
+      "F1": 0.9241,
+      "CV Recall": 0.8961
+    }
+  ],
+  "shap_importance": [
+    {
+      "feature": "hemo",
+      "shap": 1.4386
+    },
+    {
+      "feature": "sg",
+      "shap": 1.1074
+    },
+    {
+      "feature": "sc",
+      "shap": 0.5446
+    },
+    {
+      "feature": "pcv",
+      "shap": 0.4702
+    },
+    {
+      "feature": "htn",
+      "shap": 0.3748
+    },
+    {
+      "feature": "al",
+      "shap": 0.3235
+    },
+    {
+      "feature": "bgr",
+      "shap": 0.1661
+    },
+    {
+      "feature": "Age (years)",
+      "shap": 0.1646
+    },
+    {
+      "feature": "dm",
+      "shap": 0.1633
+    },
+    {
+      "feature": "sod",
+      "shap": 0.1567
+    },
+    {
+      "feature": "bp",
+      "shap": 0.0562
+    },
+    {
+      "feature": "rbcc",
+      "shap": 0.0424
+    },
+    {
+      "feature": "bu",
+      "shap": 0.0396
+    }
+  ],
+  "cm": {
+    "tn": 44,
+    "fp": 1,
+    "fn": 1,
+    "tp": 74
+  }
+}
