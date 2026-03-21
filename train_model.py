@@ -128,6 +128,13 @@ with open("ckd_best_model.pkl", "wb") as f:
     pickle.dump(best_pipe, f)
 print("\nSaved: ckd_best_model.pkl")
 
+# Save all individual pipelines so per-model ROC plots can load them
+for _name, _pipe in pipelines.items():
+    _fname = f"ckd_{_name.lower()}.pkl"
+    with open(_fname, "wb") as f:
+        pickle.dump(_pipe, f)
+    print(f"Saved: {_fname}")
+
 # Save ordinal encoder separately so app.py can encode new inputs
 with open("ckd_ord_enc.pkl", "wb") as f:
     pickle.dump({"encoder": ord_enc, "categorical_cols": categorical_cols,

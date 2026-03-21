@@ -131,16 +131,16 @@
         </div>
         <div class="p-4">
           {% set ranges = {
-            "age": ("—","—","—"),
-            "bp":  ("mm/Hg","60–90","High BP damages kidney vessels"),
-            "sc":  ("mgs/dl","0.6–1.2","Key marker of kidney filtration"),
-            "bu":  ("mgs/dl","7–20","Elevated = reduced kidney clearance"),
-            "hemo":("gms","12–17","Low = possible kidney-related anemia"),
-            "bgr": ("mgs/dl","70–140","High glucose damages glomeruli"),
-            "al":  ("0–5","0","Protein in urine = filtration issue"),
-            "sg":  ("","1.005–1.025","Urine concentration ability"),
-            "htn": ("","No = 0","Hypertension strains kidneys"),
-            "dm":  ("","No = 0","Diabetes is #1 CKD cause")
+            "age":                  ("years","—","Age affects kidney function"),
+            "blood_pressure":       ("mm/Hg","60–90","High BP damages kidney vessels"),
+            "serum_creatinine":     ("mgs/dl","0.6–1.2","Key marker of kidney filtration"),
+            "blood_urea":           ("mgs/dl","7–20","Elevated = reduced kidney clearance"),
+            "haemoglobin":          ("gms","12–17","Low = possible kidney-related anaemia"),
+            "blood_glucose_random": ("mgs/dl","70–140","High glucose damages glomeruli"),
+            "albumin":              ("0–5 scale","0","Protein in urine = filtration issue"),
+            "specific_gravity":     ("","1.005–1.025","Urine concentration ability"),
+            "hypertension":         ("","yes / no","Hypertension strains kidneys"),
+            "diabetes_mellitus":    ("","yes / no","Diabetes is #1 CKD cause")
           } %}
           <div class="row g-3">
             {% for k,v in inputs.items() %}

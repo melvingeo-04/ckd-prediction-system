@@ -13,10 +13,40 @@ from database import (init_db, add_doctor, get_doctor_by_username,
 app = Flask(__name__)
 app.secret_key = "ckd-risk-assessment-2024"
 
+# ── Short UCI name → descriptive name normalisation ──────────
+_FEAT_NORMALISE = {
+    "bp":    "blood_pressure",
+    "sg":    "specific_gravity",
+    "al":    "albumin",
+    "su":    "sugar",
+    "rbc":   "red_blood_cells",
+    "pc":    "pus_cell",
+    "pcc":   "pus_cell_clumps",
+    "ba":    "bacteria",
+    "bgr":   "blood_glucose_random",
+    "bu":    "blood_urea",
+    "sc":    "serum_creatinine",
+    "sod":   "sodium",
+    "pot":   "potassium",
+    "hemo":  "haemoglobin",
+    "pcv":   "packed_cell_volume",
+    "wc":    "white_blood_cell_count",
+    "rc":    "red_blood_cell_count",
+    "htn":   "hypertension",
+    "dm":    "diabetes_mellitus",
+    "cad":   "coronary_artery_disease",
+    "appet": "appetite",
+    "pe":    "peda_edema",
+    "ane":   "aanemia",
+}
+# Reverse: descriptive → short (for building DataFrame with correct column names)
+_FEAT_DENORMALISE = {v: k for k, v in _FEAT_NORMALISE.items()}
+
 # ── Load model + encoder + metadata ─────────────────────────
 model        = None
 ord_enc      = None
-cat_cols     = []
+cat_cols     = []   # short names as seen by encoder at fit time
+cat_cols_desc= []   # descriptive equivalents (for DEFAULTS lookup)
 model_meta   = {}
 
 if os.path.exists("ckd_best_model.pkl"):
@@ -27,9 +57,10 @@ if os.path.exists("ckd_best_model.pkl"):
 if os.path.exists("ckd_ord_enc.pkl"):
     with open("ckd_ord_enc.pkl", "rb") as f:
         enc_data  = pickle.load(f)
-    ord_enc   = enc_data["encoder"]
-    cat_cols  = enc_data["categorical_cols"]
-    print(f"[OK] Encoder loaded. Categorical cols: {cat_cols}")
+    ord_enc      = enc_data["encoder"]
+    cat_cols     = list(enc_data["categorical_cols"])          # keep original short names
+    cat_cols_desc= [_FEAT_NORMALISE.get(c, c) for c in cat_cols]
+    print(f"[OK] Encoder loaded. Categorical cols (raw): {cat_cols}")
 
 if os.path.exists("model_meta.json"):
     with open("model_meta.json") as f:
@@ -37,37 +68,62 @@ if os.path.exists("model_meta.json"):
     print(f"[OK] Meta loaded. Best model: {model_meta.get('best_model')}")
 
 # ── 10 core input features — easy to collect clinically ──────
-FEATURES = ["age","bp","sc","bu","hemo","bgr","al","sg","htn","dm"]
+# 10 core input features — matching new descriptive column names from training
+FEATURES = ["age","blood_pressure","serum_creatinine","blood_urea",
+            "haemoglobin","blood_glucose_random","albumin",
+            "specific_gravity","hypertension","diabetes_mellitus"]
 
 FEATURE_LABELS = {
-    "age":  "Age (years)",
-    "bp":   "Blood Pressure (mm/Hg)",
-    "sc":   "Serum Creatinine (mgs/dl)",
-    "bu":   "Blood Urea (mgs/dl)",
-    "hemo": "Hemoglobin (gms)",
-    "bgr":  "Blood Glucose Random (mgs/dl)",
-    "al":   "Albumin",
-    "sg":   "Specific Gravity",
-    "htn":  "Hypertension",
-    "dm":   "Diabetes Mellitus",
+    "age":                  "Age (years)",
+    "blood_pressure":       "Blood Pressure (mm/Hg)",
+    "serum_creatinine":     "Serum Creatinine (mgs/dl)",
+    "blood_urea":           "Blood Urea (mgs/dl)",
+    "haemoglobin":          "Hemoglobin (gms)",
+    "blood_glucose_random": "Blood Glucose Random (mgs/dl)",
+    "albumin":              "Albumin",
+    "specific_gravity":     "Specific Gravity",
+    "hypertension":         "Hypertension",
+    "diabetes_mellitus":    "Diabetes Mellitus",
 }
 
-# All 24 model features — fallback if model file not loaded yet
-ALL_FEATURES = ["age","bp","sg","al","su","rbc","pc","pcc","ba","bgr",
-                "bu","sc","sod","pot","hemo","pcv","wc","rc",
-                "htn","dm","cad","appet","pe","ane"]
+# All 24 model features — descriptive names (for SHAP index mapping / display)
+ALL_FEATURES = [
+    "age","blood_pressure","specific_gravity","albumin","sugar",
+    "red_blood_cells","pus_cell","pus_cell_clumps","bacteria",
+    "blood_glucose_random","blood_urea","serum_creatinine","sodium",
+    "potassium","haemoglobin","packed_cell_volume",
+    "white_blood_cell_count","red_blood_cell_count",
+    "hypertension","diabetes_mellitus","coronary_artery_disease",
+    "appetite","peda_edema","aanemia"
+]
 
-# Defaults for the 14 features not collected from the form
-# These are typical healthy values — model trained on the same UCI population
-DEFAULTS = {"su":0,"rbc":1,"pc":1,"pcc":0,"ba":0,
-            "sod":135,"pot":4.5,"pcv":44,"wc":7800,"rc":5.2,
-            "wbcc":7800,"rbcc":5.2,
-            "cad":0,"appet":1,"pe":0,"ane":0}
+# RAW_ALL_FEATURES — the column names as the model/encoder actually expects them
+# Populated from metadata (short names) if available, else derived from ALL_FEATURES
+RAW_ALL_FEATURES = [_FEAT_DENORMALISE.get(f, f) for f in ALL_FEATURES]
 
-# Override ALL_FEATURES from saved metadata if available
+# Defaults for the 14 features not collected from the form (short/raw names)
+DEFAULTS = {
+    "su":    0,
+    "rbc":   "normal",
+    "pc":    "normal",
+    "pcc":   "notpresent",
+    "ba":    "notpresent",
+    "sod":   135.0,
+    "pot":   4.5,
+    "pcv":   44.0,
+    "wc":    7800.0,
+    "rc":    5.2,
+    "cad":   "no",
+    "appet": "good",
+    "pe":    "no",
+    "ane":   "no",
+}
+
+# Override from metadata if available — metadata stores short names
 if model_meta.get("all_features"):
-    ALL_FEATURES = model_meta["all_features"]
-    print(f"[OK] All features ({len(ALL_FEATURES)}) loaded from meta.")
+    RAW_ALL_FEATURES = list(model_meta["all_features"])
+    ALL_FEATURES     = [_FEAT_NORMALISE.get(f, f) for f in RAW_ALL_FEATURES]
+    print(f"[OK] Features ({len(ALL_FEATURES)}) loaded from meta.")
 
 init_db()
 
@@ -112,17 +168,24 @@ def row_to_dict(row):
 
 # ── Helpers ──────────────────────────────────────────────────
 def build_full_row(inp):
-    """Build a DataFrame row with all 24 model features and
-    apply the same OrdinalEncoder used during training.
+    """Build a DataFrame row with all model features using the raw (short) column
+    names the encoder and model were fitted on, then apply OrdinalEncoder.
+    inp uses descriptive names (e.g. 'blood_pressure'); we convert to raw ('bp').
     """
-    row = dict(DEFAULTS)
-    # Numeric inputs from the form
+    row = dict(DEFAULTS)  # pre-filled with short-name defaults
+    # Categorical features (descriptive names) that must NOT be cast to float
+    CAT_FEATURES = {"hypertension", "diabetes_mellitus"}
     for k in FEATURES:
         if k in inp and inp[k] not in (None, ""):
-            row[k] = float(inp[k])
-    df_row = pd.DataFrame([[row.get(f, 0) for f in ALL_FEATURES]],
-                          columns=ALL_FEATURES)
-    # Apply ordinal encoding to categorical columns if encoder available
+            raw_key = _FEAT_DENORMALISE.get(k, k)   # 'blood_pressure' → 'bp'
+            if k in CAT_FEATURES:
+                row[raw_key] = inp[k]                # keep "yes"/"no"
+            else:
+                row[raw_key] = float(inp[k])
+    # Build DataFrame with RAW column names (as model expects)
+    df_row = pd.DataFrame([[row.get(f, 0) for f in RAW_ALL_FEATURES]],
+                          columns=RAW_ALL_FEATURES)
+    # Apply ordinal encoding — cat_cols already contains raw/short names
     if ord_enc is not None and cat_cols:
         present = [c for c in cat_cols if c in df_row.columns]
         if present:
@@ -176,6 +239,95 @@ def register():
         return redirect(url_for("public_predict", pid=pid))
     return render_template("register.html", doctor=current_doctor(), public_page=True)
 
+# ── Anonymous prediction — no data stored, not visible to doctor ──
+@app.route("/predict-anonymous", methods=["GET","POST"])
+def predict_anonymous():
+    """Anonymous mode: runs full prediction + SHAP but saves nothing to DB."""
+    if request.method == "POST":
+        raw = request.form.to_dict()
+        FORM_MAP = {
+            "age":  "age",
+            "bp":   "blood_pressure",
+            "sc":   "serum_creatinine",
+            "bu":   "blood_urea",
+            "hemo": "haemoglobin",
+            "bgr":  "blood_glucose_random",
+            "al":   "albumin",
+            "sg":   "specific_gravity",
+            "htn":  "hypertension",
+            "dm":   "diabetes_mellitus",
+        }
+        CAT_BOOL = {"hypertension", "diabetes_mellitus"}
+        inp = {}
+        for form_key, model_key in FORM_MAP.items():
+            val = raw.get(form_key, "")
+            if model_key in CAT_BOOL:
+                inp[model_key] = "yes" if str(val) == "1" else "no"
+            else:
+                inp[model_key] = val
+
+        df    = build_full_row(inp)
+        prob  = float(model.predict_proba(df)[0][1])
+        score = round(prob * 100, 1)
+        if score < 30:   level, level_class = "Low Risk",      "low"
+        elif score < 60: level, level_class = "Moderate Risk", "moderate"
+        else:            level, level_class = "High Risk",     "high"
+
+        try:
+            inner   = model.named_steps["model"]
+            enc     = model.named_steps.get("encoder", None)
+            imp     = model.named_steps["imputer"]
+            scl     = model.named_steps["scaler"]
+            df_proc = scl.transform(imp.transform(
+                enc.transform(df) if enc is not None else df))
+            explainer = shap.TreeExplainer(inner)
+            shap_all  = explainer.shap_values(df_proc, check_additivity=False)
+            if isinstance(shap_all, list): sv = shap_all[1][0]
+            elif shap_all.ndim == 3:       sv = shap_all[0, :, 1]
+            else:                          sv = shap_all[0]
+            # Map SHAP values: RAW name → value, then look up via descriptive name
+            all_shap_map = {_FEAT_NORMALISE.get(RAW_ALL_FEATURES[i], RAW_ALL_FEATURES[i]): float(sv[i])
+                            for i in range(min(len(sv), len(RAW_ALL_FEATURES)))}
+            shap_vals = np.array([all_shap_map.get(f, 0.0) for f in FEATURES])
+            # Feature display values come from inp directly (safe, no df column slice)
+            feat_display = np.array([float(inp.get(f, 0)) if f not in {"hypertension","diabetes_mellitus"}
+                                     else (1.0 if inp.get(f) == "yes" else 0.0) for f in FEATURES])
+            chart_b64 = shap_chart(shap_vals, feat_display)
+            order     = np.argsort(np.abs(shap_vals))[::-1]
+            explanations = [
+                f"{FEATURE_LABELS[FEATURES[i]]} {'increased' if shap_vals[i]>0 else 'lowered'} the predicted risk."
+                for i in order[:5]
+            ]
+        except Exception as e:
+            chart_b64    = None
+            explanations = [f"SHAP unavailable: {e}"]
+            shap_vals    = [0.0] * len(FEATURES)
+
+        # ── NO add_report() call — anonymous, nothing saved ──────────
+        # Create a minimal anonymous patient object for the result template
+        anon_patient = {"pid": "ANON", "name": "Anonymous", "age": raw.get("age","—")}
+
+        return render_template("result.html",
+            patient=anon_patient, score=score, level=level,
+            level_class=level_class,
+            chart_b64=chart_b64, explanations=explanations,
+            shap_vals=[round(float(v), 4) for v in shap_vals],
+            shap_labels=[FEATURE_LABELS[f] for f in FEATURES],
+            inputs={k: inp.get(k) for k in FEATURES},
+            feature_labels=FEATURE_LABELS,
+            anonymous=True,
+            doctor=current_doctor(), public_page=True)
+
+    # GET — show the anonymous predict form (reuse predict.html)
+    anon_patient = {"pid": "ANON", "name": "Anonymous", "age": "—"}
+    return render_template("predict.html",
+                           patient=anon_patient,
+                           feature_labels=FEATURE_LABELS,
+                           features=FEATURES,
+                           anonymous=True,
+                           doctor=current_doctor(), public_page=True)
+
+
 # ── /api/lookup — JSON endpoint for inline PID search ────────
 @app.route("/api/lookup")
 def api_lookup():
@@ -214,7 +366,29 @@ def public_predict(pid):
         return redirect(url_for("register"))
 
     if request.method == "POST":
-        inp   = request.form.to_dict()
+        raw = request.form.to_dict()
+        # Map form field names (short) → model column names (descriptive)
+        FORM_MAP = {
+            "age":  "age",
+            "bp":   "blood_pressure",
+            "sc":   "serum_creatinine",
+            "bu":   "blood_urea",
+            "hemo": "haemoglobin",
+            "bgr":  "blood_glucose_random",
+            "al":   "albumin",
+            "sg":   "specific_gravity",
+            "htn":  "hypertension",
+            "dm":   "diabetes_mellitus",
+        }
+        # Convert htn/dm 0/1 → yes/no for categorical encoding
+        CAT_BOOL = {"hypertension", "diabetes_mellitus"}
+        inp = {}
+        for form_key, model_key in FORM_MAP.items():
+            val = raw.get(form_key, "")
+            if model_key in CAT_BOOL:
+                inp[model_key] = "yes" if str(val) == "1" else "no"
+            else:
+                inp[model_key] = val
         df    = build_full_row(inp)
         prob  = float(model.predict_proba(df)[0][1])
         score = round(prob * 100, 1)
@@ -224,17 +398,22 @@ def public_predict(pid):
 
         try:
             inner   = model.named_steps["model"]
+            enc     = model.named_steps.get("encoder", None)
             imp     = model.named_steps["imputer"]
             scl     = model.named_steps["scaler"]
-            df_proc = scl.transform(imp.transform(df))
+            df_proc = scl.transform(imp.transform(
+                enc.transform(df) if enc is not None else df))
             explainer = shap.TreeExplainer(inner)
             shap_all  = explainer.shap_values(df_proc, check_additivity=False)
             if isinstance(shap_all, list): sv = shap_all[1][0]
             elif shap_all.ndim == 3:       sv = shap_all[0, :, 1]
             else:                          sv = shap_all[0]
-            feat_idx  = [ALL_FEATURES.index(f) for f in FEATURES]
-            shap_vals = sv[feat_idx]
-            chart_b64 = shap_chart(shap_vals, df[FEATURES].values[0])
+            all_shap_map = {_FEAT_NORMALISE.get(RAW_ALL_FEATURES[i], RAW_ALL_FEATURES[i]): float(sv[i])
+                            for i in range(min(len(sv), len(RAW_ALL_FEATURES)))}
+            shap_vals = np.array([all_shap_map.get(f, 0.0) for f in FEATURES])
+            feat_display = np.array([float(inp.get(f, 0)) if f not in {"hypertension","diabetes_mellitus"}
+                                     else (1.0 if inp.get(f) == "yes" else 0.0) for f in FEATURES])
+            chart_b64 = shap_chart(shap_vals, feat_display)
             order     = np.argsort(np.abs(shap_vals))[::-1]
             explanations = [
                 f"{FEATURE_LABELS[FEATURES[i]]} {'increased' if shap_vals[i]>0 else 'lowered'} the predicted risk."
@@ -247,7 +426,8 @@ def public_predict(pid):
 
         add_report({
             "pid":         pid,
-            "inputs":      json.dumps({k: inp.get(k) for k in FEATURES}),
+            "inputs":      json.dumps({k: inp.get(k) for k in FEATURES
+                                       if k in inp}),
             "score":       score,
             "level":       level,
             "shap_values": json.dumps([round(float(v), 4) for v in shap_vals]),

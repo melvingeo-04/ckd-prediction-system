@@ -9,153 +9,336 @@
 </div>
 {% endif %}
 
-<div class="container portal-wrap" id="portalWrap">
-  <div class="row justify-content-center w-100">
-    <div class="col-lg-5 col-md-7" style="position:relative">
+<div class="container py-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-9">
 
-      <!-- PANEL 1: REGISTER -->
-      <div id="registerPanel">
-        <div class="portal-card">
-          <div class="portal-card-header">
-            <div class="d-flex align-items-center gap-2 mb-1">
-              <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center">
-                <i class="bi bi-person-plus-fill"></i>
+      <!-- Header -->
+      <div class="text-center mb-5 fade-up">
+        <span class="section-pill">CKD Screening</span>
+        <h2 class="section-title">How would you like to proceed?</h2>
+        <p class="text-muted">Choose between a quick anonymous check or a full registered screening with saved history.</p>
+      </div>
+
+      <!-- Two option cards -->
+      <div class="row g-4 fade-up-2" id="modeSelect">
+
+        <!-- ANONYMOUS OPTION -->
+        <div class="col-md-6">
+          <div class="ckd-card h-100 p-4 d-flex flex-column mode-card"
+               id="anonCard"
+               onclick="showPanel('anonPanel')">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div style="width:52px;height:52px;background:#f5f3ff;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i class="bi bi-incognito fs-4" style="color:#7c3aed"></i>
               </div>
               <div>
-                <div style="font-weight:700;font-size:1rem">CKD Screening Portal</div>
-                <div style="font-size:.72rem;opacity:.7">Register a new patient to begin</div>
+                <div class="fw-700" style="font-size:1.05rem">Anonymous Check</div>
+                <div class="text-muted small">Quick, private, no account needed</div>
+              </div>
+            </div>
+            <ul class="list-unstyled text-muted small mb-4" style="line-height:2.2">
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i>Instant CKD risk prediction</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i>Full SHAP explanation</li>
+              <li><i class="bi bi-x-circle-fill text-danger me-2"></i>Data is <strong>not saved</strong> anywhere</li>
+              <li><i class="bi bi-x-circle-fill text-danger me-2"></i>Cannot be viewed by doctors</li>
+              <li><i class="bi bi-x-circle-fill text-danger me-2"></i>No history or follow-up</li>
+            </ul>
+            <div class="mt-auto">
+              <div class="btn btn-outline-primary rounded-pill w-100 py-2 fw-600"
+                   style="border-color:#7c3aed;color:#7c3aed">
+                <i class="bi bi-incognito me-2"></i>Continue Anonymously
               </div>
             </div>
           </div>
-          <div class="portal-card-body">
-            <form method="POST" class="mb-2">
-              <div class="mb-3">
+        </div>
+
+        <!-- REGISTERED OPTION -->
+        <div class="col-md-6">
+          <div class="ckd-card h-100 p-4 d-flex flex-column mode-card"
+               id="regCard"
+               onclick="showPanel('regPanel')">
+            <div class="d-flex align-items-center gap-3 mb-3">
+              <div style="width:52px;height:52px;background:#eff6ff;border-radius:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+                <i class="bi bi-person-check-fill fs-4" style="color:var(--primary)"></i>
+              </div>
+              <div>
+                <div class="fw-700" style="font-size:1.05rem">Registered Screening</div>
+                <div class="text-muted small">Full record with history tracking</div>
+              </div>
+            </div>
+            <ul class="list-unstyled text-muted small mb-4" style="line-height:2.2">
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i>Instant CKD risk prediction</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i>Full SHAP explanation</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i>Data <strong>saved</strong> with Patient ID</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i>Viewable by assigned doctor</li>
+              <li><i class="bi bi-check-circle-fill text-success me-2"></i>Full history &amp; follow-up reports</li>
+            </ul>
+            <div class="mt-auto">
+              <div class="btn btn-primary rounded-pill w-100 py-2 fw-600">
+                <i class="bi bi-person-plus me-2"></i>Register &amp; Continue
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /row modeSelect -->
+
+
+      <!-- ANONYMOUS PANEL -->
+      <div id="anonPanel" style="display:none" class="fade-up">
+        <div class="ckd-card p-4" style="border-radius:16px;border:2px solid #e9d5ff">
+          <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="backToSelect()">
+              <i class="bi bi-arrow-left me-1"></i>Back
+            </button>
+            <div>
+              <div class="fw-700" style="color:#7c3aed"><i class="bi bi-incognito me-2"></i>Anonymous CKD Check</div>
+              <div class="text-muted small">Your data will not be saved or shared</div>
+            </div>
+            <span class="badge ms-auto rounded-pill px-3 py-2"
+                  style="background:#f5f3ff;color:#7c3aed;font-size:.75rem">
+              <i class="bi bi-shield-lock me-1"></i>Private · Not stored
+            </span>
+          </div>
+
+          <form method="POST" action="/predict-anonymous" id="anonForm">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label">Age <small class="text-muted">(years)</small></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                  <input type="number" name="age" class="form-control" placeholder="e.g. 45" min="1" max="120" required/>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Diastolic Blood Pressure <small class="text-muted">(mm/Hg)</small></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-heart-pulse"></i></span>
+                  <input type="number" step="any" name="bp" class="form-control" placeholder="e.g. 80" min="50" max="200" required/>
+                </div>
+                <div class="form-text">Normal: 60–90</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Serum Creatinine <small class="text-muted">(mgs/dl)</small></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-droplet"></i></span>
+                  <input type="number" step="any" name="sc" class="form-control" placeholder="e.g. 1.0" min="0.1" max="20" required/>
+                </div>
+                <div class="form-text">Normal: 0.7–1.3</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Blood Urea <small class="text-muted">(mgs/dl)</small></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-activity"></i></span>
+                  <input type="number" step="any" name="bu" class="form-control" placeholder="e.g. 15" min="1" max="200" required/>
+                </div>
+                <div class="form-text">Normal: 7–20</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Hemoglobin <small class="text-muted">(gms)</small></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-droplet-half"></i></span>
+                  <input type="number" step="any" name="hemo" class="form-control" placeholder="e.g. 15" min="3" max="20" required/>
+                </div>
+                <div class="form-text">Normal: 12–17</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Blood Glucose Random <small class="text-muted">(mgs/dl)</small></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-graph-up"></i></span>
+                  <input type="number" step="any" name="bgr" class="form-control" placeholder="e.g. 100" min="50" max="500" required/>
+                </div>
+                <div class="form-text">Normal: 70–140</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Albumin <small class="text-muted">(0–5 scale)</small></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-beaker"></i></span>
+                  <input type="number" step="1" name="al" class="form-control" placeholder="0–5" min="0" max="5" required/>
+                </div>
+                <div class="form-text">0 = normal, 5 = severe</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Specific Gravity</label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-eyedropper"></i></span>
+                  <input type="number" step="0.001" name="sg" class="form-control" placeholder="e.g. 1.020" min="1.000" max="1.030" required/>
+                </div>
+                <div class="form-text">Normal: 1.015–1.025</div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Hypertension</label>
+                <div class="d-flex gap-2">
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="htn" value="1" class="d-none" required/>
+                    <div class="toggle-btn"><i class="bi bi-check-circle me-1"></i>Yes</div>
+                  </label>
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="htn" value="0" class="d-none"/>
+                    <div class="toggle-btn"><i class="bi bi-x-circle me-1"></i>No</div>
+                  </label>
+                </div>
+              </div>
+              <div class="col-md-6">
+                <label class="form-label">Diabetes Mellitus</label>
+                <div class="d-flex gap-2">
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="dm" value="1" class="d-none" required/>
+                    <div class="toggle-btn"><i class="bi bi-check-circle me-1"></i>Yes</div>
+                  </label>
+                  <label class="toggle-option flex-fill">
+                    <input type="radio" name="dm" value="0" class="d-none"/>
+                    <div class="toggle-btn"><i class="bi bi-x-circle me-1"></i>No</div>
+                  </label>
+                </div>
+              </div>
+              <div class="col-12 mt-2">
+                <button type="submit" class="btn rounded-pill w-100 py-2 fw-600"
+                        style="background:#7c3aed;color:white;font-size:1rem"
+                        onclick="document.getElementById('loadingOverlay').classList.add('show')">
+                  <i class="bi bi-cpu me-2"></i>Run Anonymous Prediction
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div><!-- /anonPanel -->
+
+
+      <!-- REGISTERED PANEL -->
+      <div id="regPanel" style="display:none" class="fade-up">
+        <div class="ckd-card p-4" style="border-radius:16px;border:2px solid #dbeafe">
+          <div class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+            <button class="btn btn-sm btn-outline-secondary rounded-pill px-3" onclick="backToSelect()">
+              <i class="bi bi-arrow-left me-1"></i>Back
+            </button>
+            <div>
+              <div class="fw-700" style="color:var(--primary)"><i class="bi bi-person-check-fill me-2"></i>Register Patient</div>
+              <div class="text-muted small">Data saved · Viewable by doctor</div>
+            </div>
+            <span class="badge ms-auto rounded-pill px-3 py-2"
+                  style="background:#eff6ff;color:var(--primary);font-size:.75rem">
+              <i class="bi bi-database me-1"></i>Saved to records
+            </span>
+          </div>
+
+          <form method="POST" action="/register">
+            <div class="row g-3">
+              <div class="col-12">
                 <label class="form-label">Full Name <span class="text-danger">*</span></label>
                 <div class="input-group">
                   <span class="input-group-text"><i class="bi bi-person"></i></span>
                   <input type="text" name="name" class="form-control" placeholder="e.g. Rahul Menon" required autofocus/>
                 </div>
               </div>
-              <div class="row g-3 mb-3">
-                <div class="col-6">
-                  <label class="form-label">Age <span class="text-danger">*</span></label>
-                  <div class="input-group">
-                    <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
-                    <input type="number" name="age" class="form-control" placeholder="e.g. 45" min="1" max="120" required/>
-                  </div>
-                </div>
-                <div class="col-6">
-                  <label class="form-label">Gender <span class="text-danger">*</span></label>
-                  <select name="gender" class="form-select" required>
-                    <option value="" disabled selected>Select</option>
-                    <option>Male</option>
-                    <option>Female</option>
-                    <option>Other</option>
-                  </select>
+              <div class="col-6">
+                <label class="form-label">Age <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="bi bi-calendar3"></i></span>
+                  <input type="number" name="age" class="form-control" placeholder="e.g. 45" min="1" max="120" required/>
                 </div>
               </div>
-              <button type="submit" class="btn btn-primary rounded-pill w-100 py-2 fw-600">
-                <i class="bi bi-person-check me-2"></i>Register & Continue to Prediction
-              </button>
-            </form>
-            <button class="already-btn" onclick="showLookup()">
-              <i class="bi bi-search"></i>
-              Already registered? Search by Patient ID
-              <i class="bi bi-arrow-right ms-auto"></i>
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- PANEL 2: LOOKUP -->
-      <div id="lookupPanel" style="display:none">
-        <div class="portal-card">
-          <div class="portal-card-header">
-            <button class="back-slide-btn mb-2" onclick="showRegister()">
-              <i class="bi bi-arrow-left"></i> Back to Registration
-            </button>
-            <div class="d-flex align-items-center gap-2">
-              <div style="width:36px;height:36px;background:rgba(255,255,255,.15);border-radius:9px;display:flex;align-items:center;justify-content:center">
-                <i class="bi bi-search"></i>
+              <div class="col-6">
+                <label class="form-label">Gender <span class="text-danger">*</span></label>
+                <select name="gender" class="form-select" required>
+                  <option value="" disabled selected>Select</option>
+                  <option>Male</option>
+                  <option>Female</option>
+                  <option>Other</option>
+                </select>
               </div>
-              <div>
-                <div style="font-weight:700;font-size:1rem">Find Patient</div>
-                <div style="font-size:.72rem;opacity:.7">Enter your Patient ID to continue</div>
-              </div>
-            </div>
-          </div>
-          <div class="portal-card-body">
-            <div class="mb-3">
-              <label class="form-label">Patient ID</label>
-              <div class="input-group">
-                <span class="input-group-text"><i class="bi bi-hash"></i></span>
-                <input type="text" id="pidInput" class="form-control" placeholder="e.g. PID0001" style="text-transform:uppercase"/>
-                <button class="btn btn-primary" onclick="lookupPID()" id="lookupBtn">
-                  <i class="bi bi-search"></i>
+              <div class="col-12 mt-2">
+                <button type="submit" class="btn btn-primary rounded-pill w-100 py-2 fw-600">
+                  <i class="bi bi-person-check me-2"></i>Register &amp; Continue to Prediction
                 </button>
               </div>
-              <div class="text-muted" style="font-size:.72rem;margin-top:.3rem">Your Patient ID was shown after registration</div>
             </div>
-            <div id="lookupResult"></div>
+          </form>
+
+          <hr class="my-3"/>
+          <button class="btn w-100 text-muted small" style="background:none;border:1px dashed #ccc;border-radius:10px;padding:.6rem"
+                  onclick="document.getElementById('lookupPanel').style.display='block';this.style.display='none'">
+            <i class="bi bi-search me-1"></i>Already registered? Search by Patient ID
+          </button>
+
+          <div id="lookupPanel" style="display:none" class="mt-3">
+            <div class="input-group">
+              <span class="input-group-text"><i class="bi bi-hash"></i></span>
+              <input type="text" id="pidInput" class="form-control"
+                     placeholder="e.g. PID0001" style="text-transform:uppercase"/>
+              <button class="btn btn-primary" onclick="lookupPID()" id="lookupBtn">
+                <i class="bi bi-search"></i>
+              </button>
+            </div>
+            <div class="text-muted mt-1" style="font-size:.72rem">Your Patient ID was shown after registration</div>
+            <div id="lookupResult" class="mt-3"></div>
           </div>
         </div>
-      </div>
+      </div><!-- /regPanel -->
 
     </div>
   </div>
 </div>
 
+<style>
+.toggle-option input:checked + .toggle-btn { background:var(--primary);color:#fff;border-color:var(--primary) }
+.toggle-btn { border:1.5px solid var(--border);border-radius:10px;padding:.55rem;text-align:center;
+              cursor:pointer;font-size:.875rem;font-weight:500;transition:all .2s }
+.toggle-btn:hover { border-color:var(--primary);color:var(--primary) }
+.mode-card { border:2px solid #e2e8f0;border-radius:16px;cursor:pointer;transition:all .22s }
+.mode-card:hover { box-shadow:0 4px 24px rgba(26,111,196,.13);border-color:var(--primary) }
+#anonCard:hover { border-color:#7c3aed !important;box-shadow:0 4px 24px rgba(124,58,237,.12) !important }
+</style>
+
 {% endblock %}
 {% block scripts %}
 <script>
-function showLookup(){
-  document.getElementById('registerPanel').style.display = 'none';
-  document.getElementById('lookupPanel').style.display   = 'block';
-  document.getElementById('pidInput').focus();
+function showPanel(id) {
+  document.getElementById("modeSelect").style.display = "none";
+  document.getElementById("anonPanel").style.display  = "none";
+  document.getElementById("regPanel").style.display   = "none";
+  document.getElementById(id).style.display = "block";
+}
+function backToSelect() {
+  document.getElementById("anonPanel").style.display  = "none";
+  document.getElementById("regPanel").style.display   = "none";
+  document.getElementById("modeSelect").style.display = "flex";
 }
 
-function showRegister(){
-  document.getElementById('lookupPanel').style.display   = 'none';
-  document.getElementById('registerPanel').style.display = 'block';
-  document.getElementById('lookupResult').innerHTML = '';
-  document.getElementById('pidInput').value = '';
-}
+document.querySelectorAll(".toggle-option input").forEach(r => {
+  r.addEventListener("change", () => {
+    document.querySelectorAll(`input[name="${r.name}"]`).forEach(inp => {
+      inp.nextElementSibling.classList.remove("active");
+    });
+    r.nextElementSibling.classList.add("active");
+  });
+});
 
-async function lookupPID(){
-  const pid = document.getElementById('pidInput').value.trim().toUpperCase();
+document.getElementById("anonForm")?.addEventListener("submit", function(){
+  document.getElementById("loadingOverlay").classList.add("show");
+});
+
+async function lookupPID() {
+  const pid = document.getElementById("pidInput").value.trim().toUpperCase();
   if(!pid) return;
-  const btn = document.getElementById('lookupBtn');
+  const btn = document.getElementById("lookupBtn");
   btn.innerHTML = '<span class="spinner-border spinner-border-sm"></span>';
   btn.disabled  = true;
-
-  try{
+  try {
     const res  = await fetch(`/api/lookup?pid=${encodeURIComponent(pid)}`);
     const data = await res.json();
-    const el   = document.getElementById('lookupResult');
-
+    const el   = document.getElementById("lookupResult");
     if(data.found){
       const p = data.patient;
-      const reports = data.reports || [];
-      let reportHTML = '';
-      if(reports.length > 0){
-        const last   = reports[0];
-        const isHigh = last.result && last.result.includes('CKD') && !last.result.includes('Not');
-        reportHTML = `<div class="mt-2 p-2 rounded-2" style="background:${isHigh?'#fef2f2':'#f0fdf4'};border:1px solid ${isHigh?'#fecaca':'#bbf7d0'}">
-          <div style="font-size:.72rem;font-weight:600;color:${isHigh?'#b91c1c':'#15803d'}">
-            <i class="bi bi-${isHigh?'x':'check'}-circle-fill me-1"></i>
-            Last Result: ${last.result||'—'} · ${last.score != null ? last.score+'%' : ''}
-          </div>
-        </div>`;
-      }
       el.innerHTML = `
         <div class="pid-result">
           <div class="d-flex align-items-center justify-content-between mb-2">
             <span class="pid-badge">${p.pid}</span>
-            <span class="text-muted small">${p.reg_date||''}</span>
+            <span class="text-muted small">${p.reg_date||""}</span>
           </div>
           <div class="fw-600">${p.name}</div>
-          <div class="text-muted small">${p.age} yrs · ${p.gender||'—'}</div>
-          ${reportHTML}
+          <div class="text-muted small">${p.age} yrs · ${p.gender||"—"}</div>
           <div class="d-flex gap-2 mt-3">
             <a href="/patient/${p.pid}" class="btn btn-outline-primary rounded-pill btn-sm flex-fill">
               <i class="bi bi-eye me-1"></i>View Profile
@@ -170,22 +353,15 @@ async function lookupPID(){
         <div class="text-center p-3" style="background:#fef2f2;border-radius:12px;border:1px solid #fecaca">
           <i class="bi bi-person-x text-danger fs-4 d-block mb-1"></i>
           <div class="fw-600 small text-danger">Patient ID not found</div>
-          <div class="text-muted" style="font-size:.75rem">Check the ID or register as a new patient</div>
-          <button class="btn btn-link btn-sm text-primary mt-1 p-0" onclick="showRegister()">← Go to Registration</button>
+          <div class="text-muted" style="font-size:.75rem">Check the ID or register above</div>
         </div>`;
     }
-  } catch(e){
-    document.getElementById('lookupResult').innerHTML =
-      `<div class="alert alert-danger small p-2">Error: ${e.message}</div>`;
-    console.error('Lookup error:', e);
-  }
-
+  } catch(e) { console.error(e); }
   btn.innerHTML = '<i class="bi bi-search"></i>';
   btn.disabled  = false;
 }
-
-document.getElementById('pidInput').addEventListener('keydown', e=>{
-  if(e.key === 'Enter') lookupPID();
+document.getElementById("pidInput")?.addEventListener("keydown", e => {
+  if(e.key === "Enter") lookupPID();
 });
 </script>
 {% endblock %}
